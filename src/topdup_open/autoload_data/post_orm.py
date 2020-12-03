@@ -2,12 +2,10 @@ import os
 import pickle
 import json
 import datetime
-import sqlalchemy
 import pandas as pd
-from glob import glob
-from random import randint, shuffle, choice, choices
+from random import randint
 from sqlalchemy import create_engine
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .log import get_logger
@@ -18,16 +16,17 @@ logger = get_logger(__name__)
 engine = create_engine(_config.DATABASE_URI, echo=False)
 Base = declarative_base()
 
+
 class Post(Base):
     """ORM class to communicate with database"""
-    
-    __tablename__ = 'post'
+
+    __tablename__ = "post"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String)
     content = Column(String)
-    author = Column(String, default='')
-    publish_time = Column(String, default='')
+    author = Column(String, default="")
+    publish_time = Column(String, default="")
     updated_time = Column(DateTime, default=datetime.datetime.utcnow)
     url = Column(String)
     max_score = Column(Float, default=0.0)
@@ -35,7 +34,7 @@ class Post(Base):
     # similar_post_info: save all post_id and score that nearest the post,
     # format: [{id:, score:},..], save in database with String type
     similar_post_info = Column(String, default=json.dumps([]))
-    embedd_vector = None # not saved in database
+    embedd_vector = None  # not saved in database
 
     def set_similar_post_info(self, similar_info):
         """
@@ -44,10 +43,11 @@ class Post(Base):
         """
         if len(similar_info) == 0:
             return False
-        similar_info = sorted(
-            similar_info, key=lambda x: x['score'], reverse=True)
+        similar_info = sorted(similar_info,
+                              key=lambda x: x["score"],
+                              reverse=True)
         self.similar_post_info = json.dumps(similar_info)
-        self.max_score = round(similar_info[0]['score'], 3)
+        self.max_score = round(similar_info[0]["score"], 3)
         return True
 
     def add_similar_info(self, post_info):
@@ -57,12 +57,12 @@ class Post(Base):
         """
         json_info = json.loads(self.similar_post_info)
         for item in json_info:
-            if item['url'] == post_info['url']:
-               return None
+            if item["url"] == post_info["url"]:
+                return None
 
         json_info.append(post_info)
-        json_info = sorted(json_info, key=lambda x: x['score'], reverse=True)
-        self.max_score = round(json_info[0]['score'], 3)
+        json_info = sorted(json_info, key=lambda x: x["score"], reverse=True)
+        self.max_score = round(json_info[0]["score"], 3)
         self.similar_post_info = json.dumps(json_info)
 
     def get_similar_post_info(self):
@@ -79,6 +79,7 @@ class Post(Base):
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
+
 def create_session():
     """Init session for ORM classes"""
     session = Session()
@@ -89,25 +90,30 @@ def load_pickle_data(fn):
     all_data = []
     if os.path.isfile(fn):
         try:
-            f = open(fn, 'rb+')
+            f = open(fn, "rb+")
             all_data = pickle.load(f)
             f.close()
-        except:
+        except Exception:
             logger.exception("pickle file is empty")
     return all_data
 
 
 def check_valid_post(post, session):
     try:
-        l = len(post.content)
-        if l < _config.MIN_CHARACTER_LEN:
-            logger.debug(f'post content is too short: length {l}, {post.title},  {post.url}')
+        num_content = len(post.content)
+        if num_content < _config.MIN_CHARACTER_LEN:
+            logger.debug(
+                f"post content is too short: length "
+                "{num_content}, {post.title}, {post.url}"
+            )
             return False
 
         all_post = session.query(Post.title, Post.url).all()
         for title, url in all_post:
             if post.title == title and post.url == url:
-                logger.debug(f'This post is already exists in database: {post.title}')
+                logger.debug(
+                    f"This post is already exists in database: {post.title}"
+                )
                 return False
         return True
 
@@ -115,22 +121,24 @@ def check_valid_post(post, session):
         logger.exception(e)
         return False
 
+
 df = None
+
 
 def fake_data():
     global df
     if df is None:
         df = pd.read_csv(_config.FAKE_DATASET)
-    id = randint(0, len(df)-1)
+    id = randint(0, len(df) - 1)
     item = df.loc[id]
-    
+
     try:
-        url = item['link']
-    except:
-        url = ''
+        url = item["link"]
+    except Exception:
+        url = ""
     post = Post(
-        title=item['title'],
-        content=item['content'],
+        title=item["title"],
+        content=item["content"],
         url=url,
     )
     return post

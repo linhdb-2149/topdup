@@ -1,5 +1,4 @@
 import os
-import json
 import pickle
 
 from .. import _config
@@ -24,13 +23,13 @@ def save_body_to_pickle(items, fn=_config.PICKLE_DATASET):
     old_items = []
     if os.path.isfile(fn):
         try:
-            f = open(fn, 'rb+')
+            f = open(fn, "rb+")
             old_items = pickle.load(f)
             f.close()
-        except:
+        except Exception:
             pass
     old_items.extend(items)
-    f = open(fn, 'wb+')
+    f = open(fn, "wb+")
     pickle.dump(old_items, f)
     f.close()
 
@@ -38,9 +37,9 @@ def save_body_to_pickle(items, fn=_config.PICKLE_DATASET):
 def load_body_from_pickle(fn=_config.PICKLE_DATASET):
     all_items = []
     try:
-        f = open(fn, 'rb+')
+        f = open(fn, "rb+")
         all_items = pickle.load(f)
         f.close()
-    except:
+    except Exception:
         logger.debug("pickle file is empty")
     return all_items
