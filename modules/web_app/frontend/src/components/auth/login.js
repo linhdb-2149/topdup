@@ -14,7 +14,7 @@ import ValidatedLoginForm from "./validated-login-form"
 
 
 export default function LoginModal(props) {
-  // const setUserData = props.setUserData
+  const setUserData = props.setUserData
   const authService = new AuthService()
   const toastService = new ToastService()
   const authContext = useContext(AuthContext)
@@ -26,12 +26,14 @@ export default function LoginModal(props) {
     httpRequest.then(
       result => {
         authContext.login(result.data.user)
-        // setUserData(result.data.user)
+        setUserData(result.data.user)
         toastService.displayToast(result, Severity.Success)
         modalProps.onHide()
       },
       error => toastService.displayToast(error.response, Severity.Error)
-    )
+    ).catch(err => {
+      console.log(err)
+    })
   }
 
   const openSignUp = () => {
@@ -45,9 +47,12 @@ export default function LoginModal(props) {
         <div className="layout-grid centered-container auth-heading">Đăng nhập</div>
         <div className="layout-grid centered-container margin-bottom--20">
           <GoogleLogin
-            clientId="658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com"
+            clientId="712851565891-s8rjhfg50a8ebqmeq8ssdd4f0u0s24ca.apps.googleusercontent.com"
             buttonText="Login"
-            onSuccess={(ggResponse) => onSubmitLogin('facebook', ggResponse, props)}
+            onSuccess={(ggResponse) => {
+              onSubmitLogin('google', ggResponse, props)
+              console.log(ggResponse);
+            }}
             onFailure={(ggResponse) => { }}
             cookiePolicy={'single_host_origin'}
             render={renderProps => (

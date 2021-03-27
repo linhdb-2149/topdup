@@ -4,7 +4,7 @@ import { AuthContext } from "./auth-context"
 import LoginModal from "./login"
 import SignupModal from "./signup"
 
-export default function Authentication() {
+export default function Authentication(props) {
   const [signupModalShow, setSignupModalShow] = useState(false)
   const [loginModalShow, setLoginModalShow] = useState(false)
   const authContext = useContext(AuthContext)
@@ -44,8 +44,12 @@ export default function Authentication() {
   return (
     <>
       { authContext.isLoggedIn ? loggedInItems : notLoggedInItems}
-      <SignupModal show={signupModalShow} onHide={() => setSignupModalShow(false)} />
+      <SignupModal
+        setUserData={props.setUserData}
+        show={signupModalShow}
+        onHide={() => setSignupModalShow(false)} />
       <LoginModal
+        setUserData={props.setUserData}
         show={loginModalShow}
         onHide={() => setLoginModalShow(false)}
         openSignUp={() => setSignupModalShow(true)}

@@ -6,7 +6,7 @@ import { externalAuthUrl, secretKey } from "../configs/index"
 import { CODE } from "../constants/index"
 import createPool from "./pool.js"
 import transporter from "./utils/nodemailer"
-
+import { hostName } from "../configs/index";
 const pool = createPool(process.env.POOL_HOST,
   process.env.POOL_DB_NAME,
   process.env.POOL_USR,
@@ -63,14 +63,8 @@ const register = async (req, res) => {
     }
 
     const hashPassword = bcrypt.hashSync(password, 8)
+    console.log(hashPassword);
     const secretCode = Math.ceil(Math.random() * 10000)
-
-    console.log(email)
-    console.log(password)
-    console.log(firstName)
-    console.log(lastName)
-    console.log(hashPassword)
-    console.log(secretCode)
 
     const queryAddNewUser = `
             INSERT INTO public."user" (firstName, lastName, email, password,login, thumbnail, is_verified , secret_code, account_type)
@@ -79,17 +73,17 @@ const register = async (req, res) => {
           `
     const result = await pool.query(queryAddNewUser)
 
-    // var mailOptions = {
-    //   from: "xxx@gmail.com",
-    //   to: result.rows[0].email,
-    //   subject: "Sending Email using Node.js",
-    //   text: `Please use the following link within the next 10 minutes to activate your account on xxx APP: ${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}`,
-    //   html: `<p>Please use the following link within the next 10 minutes to activate your account on xxx APP:
-    //             ${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}
-    //             <strong><a href="${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}" target="_blank">Email Topdup.xyz</a></strong></p>`
-    // }
+    var mailOptions = {
+      from: "topdup.org@gmail.com",
+      to: result.rows[0].email,
+      subject: "Sending Email using Node.js",
+      text: `Please use the following link within the next 10 minutes to activate your account on xxx APP: ${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}`,
+      html: `<p>Please use the following link within the next 10 minutes to activate your account on xxx APP:
+                ${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}
+                <strong><a href="${hostName}/api/v1/auth/verification/verify-account/${result.rows[0].id}/${secretCode}" target="_blank">Email Topdup.xyz</a></strong></p>`
+    }
 
-    // await transporter.sendMail(mailOptions)
+    await transporter.sendMail(mailOptions)
 
     if (!result) {
       res.status(CODE.ERROR).send({ message: "Đăng ký thất bại!" })
@@ -144,7 +138,7 @@ const loginNormal = async (req, res) => {
     }
 
     const accessToken = generatorToken(result.rows[0].id, uuidv4())
-    responseObj = {
+    let responseObj = {
       user: {
         id: result.rows[0].id,
         name: `${result.rows[0].firstname} ${result.rows[0].lastname}`,
@@ -241,28 +235,23 @@ const loginByGoogle = async (req, res) => {
       `${externalAuthUrl.gg}/${param}${ggToken}`
     )
     const ggInfo = response.data
+    console.log(ggInfo);
     if (response.status === CODE.SUCCESS && ggInfo.sub === ggId) {
       let queryIsExist = `
             SELECT *
-               FROM public."user"
-               WHERE email = ${ggInfo.email}
+               FROM public.user
+               WHERE email = '${ggInfo.email}'
                `
       let isExist = await pool.query(queryIsExist)
+      console.log("=======================isExist", isExist);
       if (isExist.rows.length != 0) {
-        const queryUpdate = `
-                UPDATE public."user"
-                SET  email = '${ggInfo.email}', thumnail = '${ggInfo.picture}'
-                WHERE id = '${isExist.id}'
-                RETURNING *
-              `
-        const result = await pool.query(queryUpdate)
-        const accessToken = generatorToken(result.rows[0].id, uuidv4())
+        const accessToken = generatorToken(isExist.rows[0].id, uuidv4())
         res.status(CODE.SUCCESS).json({
           user: {
-            id: result.rows[0].id,
-            name: result.rows[0].email,
-            thumbnail: result.rows[0].thumbnail,
-            is_verified: result.rows[0].is_verified
+            id: isExist.rows[0].id,
+            name: isExist.rows[0].email,
+            thumbnail: isExist.rows[0].thumbnail,
+            is_verified: isExist.rows[0].is_verified
           },
           accessToken: accessToken,
           message: "Đăng nhập thành công!"
@@ -270,7 +259,7 @@ const loginByGoogle = async (req, res) => {
       } else {
         const queryNewUser = `
                 INSERT INTO public."user" (firstName, lastName, thumbnail, email,login ,is_verified)
-                VALUES ( '${ggInfo.family_name}','${ggInfo.given_name}', '${ggInfo.name}', '${ggInfo.picture}','${ggInfo.email}','true','${ggInfo.verified_email}')
+                VALUES ( '${ggInfo.family_name}','${ggInfo.given_name}', '${ggInfo.picture}','${ggInfo.email}','true','${ggInfo.email_verified}')
                 RETURNING *
                 `
         const result = await pool.query(queryNewUser)
@@ -327,15 +316,23 @@ const restPassword = async (req, res) => {
 const genSecretCode = async (req, res) => {
   try {
     const { email } = req.query
+    console.log(email);
+    // let queryIsExist = `
+    //         SELECT *
+    //         FROM public."user"
+    //         WHERE email =  '${email}'
+    //         RETURNING *
+    //     `
     let queryIsExist = `
-            SELECT *
-            FROM public."user"
-            WHERE email =  '${email}'
-            RETURNING *
-        `
+    SELECT *
+    FROM public."user"
+    WHERE email =  '${email}'
+    `
     const result = await pool.query(queryIsExist)
+    console.log(result);
+
     var mailOptions = {
-      from: "xxx@gmail.com",
+      from: "topdup.org@gmail.com",
       to: result.rows[0].email,
       subject: "Mã số bí mật",
       text: `Please use the following link within the next 10 minutes to activate your account on xxx APP: ${result.rows[0].secret_code}`
@@ -347,6 +344,9 @@ const genSecretCode = async (req, res) => {
     })
   } catch (error) { }
 }
+
+
+
 
 export default {
   confirmEmail,
