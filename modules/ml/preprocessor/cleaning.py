@@ -32,7 +32,7 @@ def clean_wiki_text(text: str) -> str:
 
 def normalize_text(text: str) -> str:
     """
-    Perform text normalization using regex patterns
+    Performs text normalization using regex patterns
     """
     text = unicode_normalize("NFC", text)
     text = text.lower()

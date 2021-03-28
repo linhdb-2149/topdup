@@ -1,3 +1,6 @@
+export const TopDup = {
+    BaseUrl: 'https://topdup.org'
+}
 export const AuthMode = {
     Facebook: 'facebook',
     Google: 'google',

@@ -1,6 +1,6 @@
 import React from "react"
 import { Container, Nav, Navbar } from "react-bootstrap"
-import { useLocation } from "react-router-dom"
+import { useLocation, NavLink } from "react-router-dom"
 import Authentication from "../auth/auth"
 import "./navigation-bar.css"
 
@@ -30,7 +30,7 @@ const NavigationBar = (props) => {
         </Container>
       </Navbar>
     </>
-  )
-}
+  );
+};
 
 export default NavigationBar

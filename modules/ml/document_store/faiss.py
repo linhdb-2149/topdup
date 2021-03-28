@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class FAISSDocumentStore(SQLDocumentStore):
     """
-    DocumentStore for very large scale embedding based dense retrievers like the DPR.
+    Document store for very large scale embedding based dense retrievers like the DPR.
 
     It implements the FAISS library(https://github.com/facebookresearch/faiss)
     to perform similarity search on vectors.
@@ -33,7 +33,7 @@ class FAISSDocumentStore(SQLDocumentStore):
     def __init__(
         self,
         sql_url: str = "postgresql+psycopg2://",
-        index_buffer_size: int = 10_000,
+        index_buffer_size: int = 10000,
         vector_dim: int = 128,
         faiss_index_factory_str: str = "Flat",
         faiss_index=None,
@@ -71,7 +71,7 @@ class FAISSDocumentStore(SQLDocumentStore):
                                           documents. When set as True, any document with an existing ID gets updated.
                                           If set to False, an error is raised if the document ID of the document being
                                           added already exists.
-        :param index: Name of index in DocumentStore to use.
+        :param index: Name of index in document store to use.
         :param similarity: The similarity function used to compare document vectors. 'dot_product' is the default sine it is
                    more performant with DPR embeddings. 'cosine' is recommended if you are using a Sentence BERT model.
         """
@@ -91,13 +91,14 @@ class FAISSDocumentStore(SQLDocumentStore):
             ):  # enable reconstruction of vectors for inverted index
                 self.faiss_index.set_direct_map_type(faiss.DirectMap.Hashtable)
 
+        self.sql_url = sql_url
         self.index_buffer_size = index_buffer_size
         self.return_embedding = return_embedding
         if similarity == "dot_product":
             self.similarity = similarity
         else:
             raise ValueError(
-                "The FAISS DocumentStore can currently only support dot_product similarity. "
+                "The FAISS document store can currently only support dot_product similarity. "
                 'Please set similarity="dot_product"'
             )
         super().__init__(
@@ -173,9 +174,10 @@ class FAISSDocumentStore(SQLDocumentStore):
 
             docs_to_write_in_sql = []
             for doc in document_objects[i : i + self.index_buffer_size]:
-                meta = doc.meta
+                # meta = doc.meta
                 if add_vectors:
-                    meta["vector_id"] = vector_id
+                    # meta["vector_id"] = vector_id
+                    doc.vector_id = vector_id
                     vector_id += 1
                 docs_to_write_in_sql.append(doc)
 
@@ -184,13 +186,11 @@ class FAISSDocumentStore(SQLDocumentStore):
             )
 
     def _create_document_field_map(self) -> Dict:
-        return {
-            self.index: "embedding",
-        }
+        return {self.index: "embedding"}
 
-    def update_embeddings(self, vecterizer, index: Optional[str] = None):
+    def update_embeddings(self, vectorizer, index: Optional[str] = None):
         """
-        Updates the embeddings in the the DocumentStore using the encoding model specified in the retriever.
+        Updates the embeddings in the the document store using the encoding model specified in the retriever.
         This can be useful if want to add or change the embeddings for your documents (e.g. after changing the retriever config).
 
         :param retriever: Retriever to use to get embeddings for text
@@ -219,7 +219,7 @@ class FAISSDocumentStore(SQLDocumentStore):
         # self.faiss_index.reset()
 
         logger.info(f"Updating embeddings for {len(documents)} docs...")
-        embeddings = vecterizer.transform_document_objects(documents)  # type: ignore
+        embeddings = vectorizer.transform_document_objects(documents)  # type: ignore
         assert len(documents) == len(embeddings)
         for i, doc in enumerate(documents):
             doc.embedding = embeddings[i]
@@ -231,7 +231,7 @@ class FAISSDocumentStore(SQLDocumentStore):
             embeddings = [
                 doc.embedding for doc in documents[i : i + self.index_buffer_size]
             ]
-            embeddings = np.array(embeddings, dtype="float32")
+            embeddings = np.ascontiguousarray(embeddings, dtype="float32")
             self.faiss_index.add(embeddings)
 
             for doc in tqdm(documents[i : i + self.index_buffer_size]):
@@ -240,24 +240,33 @@ class FAISSDocumentStore(SQLDocumentStore):
             self.update_vector_ids(vector_id_map, index=index)
             print("update")
 
-    def get_all_documents(
-        self, index: Optional[str] = None, return_embedding: Optional[bool] = None
-    ) -> List[Document]:
+    def is_synchronized(self) -> bool:
         """
-        Get documents from the DocumentStore.
+        Check if faiss embeddings covered all documents
+        """
+        return self.faiss_index.ntotal == self.get_document_count()
 
-        :param index: Name of the index to get the documents from. If None, the
-                      DocumentStore's default index (self.index) will be used.
-        :param return_embedding: Whether to return the document embeddings.
+    def get_all_documents(
+        self, index: Optional[str] = None, return_embedding: Optional[bool] = False
+    ) -> List[Document]:
+        """Get documents from the document store.
+
+        Args:
+            index (str, optional): Name of the index to get the documents from. Defaults to self.index.
+            return_embedding (bool, optional): Whether to return the document embeddings.. Defaults to False.
+
+        Returns:
+            List[Document]
         """
         documents = super(FAISSDocumentStore, self).get_all_documents(index=index)
         if return_embedding is None:
             return_embedding = self.return_embedding
         if return_embedding:
             for doc in documents:
-                if doc.meta and doc.meta.get("vector_id") is not None:
+                if doc.meta and doc.vector_id is not None:
                     doc.embedding = self.faiss_index.reconstruct(
-                        int(doc.meta["vector_id"])
+                        # int(doc.meta["vector_id"])
+                        int(doc.vector_id)
                     )
         return documents
 
@@ -290,7 +299,7 @@ class FAISSDocumentStore(SQLDocumentStore):
 
     def delete_all_documents(self, index=None):
         """
-        Delete all documents from the DocumentStore.
+        Delete all documents from the document store.
         """
         index = index or self.index
         self.faiss_index.reset()
@@ -324,7 +333,7 @@ class FAISSDocumentStore(SQLDocumentStore):
                 "No index exists. Use 'update_embeddings()` to create an index."
             )
 
-        query_emb = query_emb.astype(np.float32)
+        query_emb = np.ascontiguousarray(query_emb, dtype="float32")
         return self.faiss_index.search(query_emb, top_k)
 
     def query_docs_by_embedding(
@@ -374,10 +383,12 @@ class FAISSDocumentStore(SQLDocumentStore):
             str(v_id): s for v_id, s in zip(vector_id_matrix[0], score_matrix[0])
         }
         for doc in documents:
-            doc.score = scores_for_vector_ids[doc.meta["vector_id"]]
+            # doc.score = scores_for_vector_ids[doc.meta["vector_id"]]
+            doc.score = scores_for_vector_ids[doc.vector_id]
             doc.probability = float(expit(np.asarray(doc.score / 100)))
             if return_embedding is True:
-                doc.embedding = self.faiss_index.reconstruct(int(doc.meta["vector_id"]))
+                # doc.embedding = self.faiss_index.reconstruct(int(doc.meta["vector_id"]))
+                doc.embedding = self.faiss_index.reconstruct(int(doc.vector_id))
 
         return documents
 
@@ -395,7 +406,7 @@ class FAISSDocumentStore(SQLDocumentStore):
         cls,
         faiss_file_path: Union[str, Path],
         sql_url: str,
-        index_buffer_size: int = 10_000,
+        index_buffer_size: int = 10000,
     ):
         """
         Load a saved FAISS index from a file and connect to the SQL database.

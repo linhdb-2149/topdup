@@ -189,11 +189,11 @@
   pointer-events: auto;
 }
 
-.sologan-container {
+.slogan-container {
   padding: 50px 0px;
 }
 
-.sologan-heading {
+.slogan-heading {
   font-style: normal;
   font-weight: bold;
   font-size: 40px;
@@ -204,7 +204,7 @@
   margin-bottom: 10px;
 }
 
-.sologan-description {
+.slogan-description {
   font-style: normal;
   font-weight: normal;
   font-size: 18px;
@@ -223,12 +223,12 @@
   margin-bottom: 30px;
 }
 
-.sologan-bottom-container {
+.slogan-bottom-container {
   margin-top: 20px;
   margin-bottom: 40px;
 }
 
-.sologan-bottom {
+.slogan-bottom {
   font-style: normal;
   font-weight: normal;
   font-size: 24px;

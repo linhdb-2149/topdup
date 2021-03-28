@@ -1,30 +1,25 @@
 import itertools
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from uuid import uuid4
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    create_engine,
-    func,
-)
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, create_engine, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import case, null
+from sqlalchemy.sql.sqltypes import Float
 
 from modules.ml.document_store.base import BaseDocumentStore
 from modules.ml.schema import Document
+from modules.ml.utils import meta_parser
 
 logger = logging.getLogger(__name__)
 
 
 Base = declarative_base()  # type: Any
+
+WHITELIST = ["genk", "cafebiz"]
 
 
 class ORMBase(Base):
@@ -68,7 +63,7 @@ class SQLDocumentStore(BaseDocumentStore):
         index: str = "document",
         label_index: str = "label",
         update_existing_documents: bool = False,
-        batch_size: int = 32766,
+        batch_size: int = 1000,
     ):
         """
         An SQL backed DocumentStore. Currently supports SQLite, PostgreSQL and MySQL backends.
@@ -89,6 +84,7 @@ class SQLDocumentStore(BaseDocumentStore):
                            More info refer: https://www.sqlite.org/limits.html
         """
         engine = create_engine(url)
+        self.engine = engine
         ORMBase.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         self.session = Session()
@@ -122,12 +118,14 @@ class SQLDocumentStore(BaseDocumentStore):
             for row in query.all():
                 documents.append(self._convert_sql_row_to_document(row))
 
-        return documents
+        sorted_documents = sorted(documents, key=lambda doc: doc.id)
+        return sorted_documents
 
     def get_documents_by_vector_ids(
         self, vector_ids: List[str], index: Optional[str] = None
     ):
         """Fetch documents by specifying a list of text vector id strings"""
+
         index = index or self.index
 
         documents = []
@@ -139,8 +137,76 @@ class SQLDocumentStore(BaseDocumentStore):
             for row in query.all():
                 documents.append(self._convert_sql_row_to_document(row))
 
-        sorted_documents = sorted(documents, key=lambda doc: vector_ids.index(doc.meta["vector_id"]))  # type: ignore
+        # sorted_documents = sorted(documents, key=lambda doc: vector_ids.index(doc.meta["vector_id"]))  # type: ignore
+        sorted_documents = sorted(
+            documents, key=lambda doc: vector_ids.index(doc.vector_id)
+        )
         return sorted_documents
+
+    def get_similar_documents_by_threshold(
+        self,
+        threshold: float = 0.90,
+        from_time: datetime = None,
+        to_time: datetime = None,
+    ) -> List[Document]:
+        """Fetch documents by specifying a threshold to filter the similarity scores in meta data"""
+
+        if not from_time and not to_time:  # get all
+            meta = self.session.query(MetaORM)
+        else:
+            if not from_time:
+                from_time = datetime(1970, 1, 1)
+            if not to_time:
+                to_time = datetime.now()
+            meta = self.session.query(MetaORM).filter(
+                MetaORM.updated > from_time, MetaORM.updated <= to_time
+            )
+
+        documents = list()
+        document_id_AB = list()
+        document_id_A = meta.filter(
+            MetaORM.name == "sim_score",
+            MetaORM.value.cast(Float) >= threshold,
+            MetaORM.value.cast(Float) < 1,
+        )
+        for row in document_id_A.all():
+            document_id_B = meta.filter(
+                MetaORM.document_id == row.document_id, MetaORM.name == "similar_to"
+            )
+
+            document_id_AB.append(
+                sorted([row.document_id, document_id_B.first().value]) + [row.value]
+            )  # row.value = `sim_score`
+
+        document_id_AB.sort()
+        document_id_AB = list(
+            document_id_AB for document_id_AB, _ in itertools.groupby(document_id_AB)
+        )
+
+        for document_id in document_id_AB:
+            meta_A = dict()
+            meta_B = dict()
+            meta_A.update({"document_id": document_id[0]})
+            meta_B.update({"document_id": document_id[1]})
+            for row in meta.filter(MetaORM.document_id == document_id[0]).all():
+                if row.name == "sim_score":
+                    meta_A.update({row.name: document_id[2]})
+                else:
+                    meta_A.update({row.name: row.value})
+            for row in meta.filter(MetaORM.document_id == document_id[1]).all():
+                if row.name == "sim_score":
+                    meta_B.update({row.name: document_id[2]})
+                else:
+                    meta_B.update({row.name: row.value})
+
+            domain_A = meta_parser("domain", meta_A).lower()
+            domain_B = meta_parser("domain", meta_B).lower()
+            domain_A = "domain" if domain_A in WHITELIST else domain_A
+            domain_B = "domain" if domain_B in WHITELIST else domain_B
+            if domain_A != domain_B:  # rule defined by the PO
+                documents.append((meta_A, meta_B))
+
+        return documents
 
     def get_all_documents(
         self,
@@ -179,7 +245,9 @@ class SQLDocumentStore(BaseDocumentStore):
             documents_map[row.id] = Document(
                 id=row.id,
                 text=row.text,
-                meta=None if row.vector_id is None else {"vector_id": row.vector_id},  # type: ignore
+                meta=None
+                if row.vector_id is None
+                else {"vector_id": row.vector_id},  # type: ignore
             )
 
         for doc_ids in self.chunked_iterable(
@@ -192,7 +260,9 @@ class SQLDocumentStore(BaseDocumentStore):
             for row in meta_query.all():
                 if documents_map[row.document_id].meta is None:
                     documents_map[row.document_id].meta = {}
-                documents_map[row.document_id].meta[row.name] = row.value  # type: ignore
+                documents_map[row.document_id].meta[
+                    row.name
+                ] = row.value  # type: ignore
 
         return list(documents_map.values())
 
@@ -212,10 +282,11 @@ class SQLDocumentStore(BaseDocumentStore):
 
           :return: None
         """
-
+        # TODO handle Iterable type
         index = index or self.index
         if len(documents) == 0:
             return
+
         # Make sure we comply to Document class format
         if isinstance(documents[0], dict):
             document_objects = [
@@ -227,10 +298,12 @@ class SQLDocumentStore(BaseDocumentStore):
         for i in range(0, len(document_objects), self.batch_size):
             for doc in document_objects[i : i + self.batch_size]:
                 meta_fields = doc.meta or {}
-                vector_id = meta_fields.get("vector_id")
+                # vector_id = meta_fields.get("vector_id")
+                vector_id = doc.vector_id
                 meta_orms = [
                     MetaORM(name=key, value=value) for key, value in meta_fields.items()
                 ]
+
                 doc_orm = DocumentORM(
                     id=doc.id,
                     text=doc.text,
@@ -238,12 +311,14 @@ class SQLDocumentStore(BaseDocumentStore):
                     meta=meta_orms,
                     index=index,
                 )
+
                 if self.update_existing_documents:
                     # First old meta data cleaning is required
                     self.session.query(MetaORM).filter_by(document_id=doc.id).delete()
                     self.session.merge(doc_orm)
                 else:
                     self.session.add(doc_orm)
+
             try:
                 self.session.commit()
             except Exception as ex:
@@ -276,12 +351,7 @@ class SQLDocumentStore(BaseDocumentStore):
             self.session.query(DocumentORM).filter(
                 DocumentORM.id.in_(chunk_map), DocumentORM.index == index
             ).update(
-                {
-                    DocumentORM.vector_id: case(
-                        chunk_map,
-                        value=DocumentORM.id,
-                    )
-                },
+                {DocumentORM.vector_id: case(chunk_map, value=DocumentORM.id)},
                 synchronize_session=False,
             )
             try:
@@ -295,11 +365,18 @@ class SQLDocumentStore(BaseDocumentStore):
         """
         Update the metadata dictionary of a document by specifying its string id
         """
-        self.session.query(MetaORM).filter_by(document_id=id).delete()
+        query = self.session.query(MetaORM).filter_by(document_id=id)
+        current_meta = dict()
+        for row in query.all():
+            current_meta.update({row.name: row.value})
+        query.delete()
+
+        meta.update(current_meta)
         meta_orms = [
             MetaORM(name=key, value=value, document_id=id)
             for key, value in meta.items()
         ]
+
         for m in meta_orms:
             self.session.add(m)
         self.session.commit()
@@ -323,12 +400,44 @@ class SQLDocumentStore(BaseDocumentStore):
         count = query.count()
         return count
 
+    def get_document_ids(
+        self,
+        from_time: datetime = None,
+        to_time: datetime = None,
+        index: Optional[str] = None,
+    ) -> List[str]:
+        """Return list of document ids in the DocumentStore.
+
+        Args:
+            from_time (datetime, optional). Defaults to None.
+            to_time (datetime, optional). Defaults to None.
+            index (str, optional): Specify an index name if needed. Defaults to None.
+
+        Returns:
+            List[str]: List of document ids only
+        """
+        if not from_time and not to_time:  # get all
+            query = self.session.query(DocumentORM.id).filter_by(index=index)
+        else:
+            if not from_time:
+                from_time = datetime(1970, 1, 1)
+            if not to_time:
+                to_time = datetime.now()
+            query = self.session.query(
+                DocumentORM.id, DocumentORM.index, DocumentORM.updated
+            ).filter(
+                DocumentORM.updated > from_time,
+                DocumentORM.updated <= to_time,
+                DocumentORM.index == index,
+            )
+        return [row.id for row in query.all()]
+
     def _convert_sql_row_to_document(self, row) -> Document:
         document = Document(
             id=row.id, text=row.text, meta={meta.name: meta.value for meta in row.meta}
         )
         if row.vector_id:
-            document.meta["vector_id"] = row.vector_id
+            document.vector_id = row.vector_id
         return document
 
     def query_by_embedding(

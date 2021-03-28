@@ -1,15 +1,19 @@
 import React from "react"
-
-import { Result, Button } from 'antd';
+import { Nav } from "react-bootstrap"
 
 function ErrorPage() {
-    return (
-        <Result
-            status="404"
-            title="404"
-            subTitle="Sorry, the page you visited does not exist."
-            extra={<Button type="primary">Back Home</Button>}
-        />
-    )
+  return (
+    <div class="page-wrap d-flex flex-row align-items-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-12 text-center">
+            <span class="display-1 d-block">404</span>
+            <div class="mb-4 lead">Trang web không tồn tại.</div>
+            <Nav.Link href="/">Về trang chính</Nav.Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 export default ErrorPage

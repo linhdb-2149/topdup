@@ -113,7 +113,7 @@ export const DupReportList = (props) => {
         <div className="sr-compare">
           <Link to={{
             pathname: '/dup-compare',
-            state: { urlA, urlB }
+            search: `?sourceUrl=${urlA}&targetUrl=${urlB}`
           }}>
             <button class="btn btn-outline-secondary">So sánh</button>
           </Link>

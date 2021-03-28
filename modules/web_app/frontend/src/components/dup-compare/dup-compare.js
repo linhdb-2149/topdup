@@ -1,10 +1,15 @@
-import { useState, useEffect } from "react"
+import * as _ from 'lodash'
+import { useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
+import { Severity, TopDup } from "../../shared/constants"
+import { ToastService } from "../../shared/toast.service"
 import "./dup-compare.css"
 import DupCompareService from "./dup-compare.service"
-import { ToastService } from "../../shared/toast.service"
-import { Severity } from "../../shared/constants"
-import { useLocation } from "react-router-dom"
-import * as _ from 'lodash'
+import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share'
+import ReactIconRender from '../../shared/react-icon-renderer'
+import { FaFacebookSquare, FaTwitterSquare } from 'react-icons/fa'
+
+const queryString = require('query-string')
 
 const Mode = {
   Text: 'text',
@@ -13,27 +18,36 @@ const Mode = {
 
 const DupCompare = (props) => {
   const routeInfo = useLocation()
-  const passedState = routeInfo.state
-  const { urlA, urlB } = passedState
-  const defaultModeA = urlA ? Mode.Url : Mode.Text
-  const defaultModeB = urlB ? Mode.Url : Mode.Text
+  const searchStr = routeInfo.search || ''
+  const queryParam = queryString.parse(searchStr) || {}
+  const _sourceUrl = queryParam.sourceUrl || ''
+  const _targetUrl = queryParam.targetUrl || ''
+  const _sourceText = queryParam.sourceText || ''
+  const _targetText = queryParam.targetText || ''
+
+  const defaultModeA = _sourceUrl ? Mode.Url : Mode.Text
+  const defaultModeB = _targetUrl ? Mode.Url : Mode.Text
   const [sourceMode, setSourceMode] = useState(defaultModeA)
   const [targetMode, setTargetMode] = useState(defaultModeB)
-  const [sourceText, setSourceText] = useState('')
-  const [targetText, setTargetText] = useState('')
-  const [sourceUrl, setSourceUrl] = useState(urlA)
-  const [targetUrl, setTargetUrl] = useState(urlB)
+
+  const [sourceUrl, setSourceUrl] = useState(_sourceUrl)
+  const [targetUrl, setTargetUrl] = useState(_targetUrl)
+  const [sourceText, setSourceText] = useState(_sourceText)
+  const [targetText, setTargetText] = useState(_targetText)
+
   const [sourceSegements, setSourceSegments] = useState([])
   const [targetSegements, setTargetSegments] = useState([])
   const [resultPairs, setResultPairs] = useState([])
   const [compareResult, setCompareResult] = useState({})
+  const [shareUrl, setShareUrl] = useState('')
+
   const [loading, setLoading] = useState(false)
 
   const toastService = new ToastService()
   const simCheckService = new DupCompareService()
 
   useEffect(() => {
-    if (urlA && urlB) {
+    if ((_sourceUrl || _sourceText) && (_targetUrl || _targetText)) {
       checkSimilarity()
     }
   }, [])
@@ -43,7 +57,17 @@ const DupCompare = (props) => {
     const sourceContent = sourceMode === Mode.Text ? sourceText : sourceUrl
     const targetContent = targetMode === Mode.Text ? targetText : targetUrl
     const compareOption = { sourceMode, sourceContent, targetMode, targetContent }
+    const queryParam = {}
+    if (sourceMode === Mode.Url) queryParam['sourceUrl'] = sourceContent
+    if (sourceMode === Mode.Text) queryParam['sourceText'] = sourceContent
+    if (targetMode === Mode.Url) queryParam['targetUrl'] = targetContent
+    if (targetMode === Mode.Text) queryParam['targetText'] = targetContent
+    setShareUrl(`${TopDup.BaseUrl}/dup-compare?${queryString.stringify(queryParam)}`)
+
+    console.log('shareUrl: ', shareUrl)
+
     setLoading(true)
+    setCompareResult({})
     simCheckService.getSimilarityResults(compareOption)
       .then(response => {
         const responseData = response.data || {}
@@ -134,6 +158,21 @@ const DupCompare = (props) => {
     })
   }
 
+  const shareButtons = (
+    <>
+      <FacebookShareButton
+        url={shareUrl}
+        quote={props.text}>
+        <ReactIconRender className="social-share-btn" color={'#4267B2'} IconComponent={FaFacebookSquare} />
+      </FacebookShareButton>
+      <TwitterShareButton
+        url={shareUrl}
+        title={props.text}>
+        <ReactIconRender className="social-share-btn" color={'#1DA1F2'} IconComponent={FaTwitterSquare} />
+      </TwitterShareButton>
+    </>
+  )
+
   return (
     <div className="dup-compare-container">
       <div className="layout-grid margin-bottom--20">
@@ -163,12 +202,15 @@ const DupCompare = (props) => {
         <button type="button" className="btn btn-warning compare-btn" onClick={checkSimilarity}>So sánh</button>
       </div>
       <div class="full-width margin-bottom--xs">
-        <h4>Kết quả: </h4>
-        <span>Số cặp trùng {resultPairs.length}</span>
+      <h4>Kết quả</h4>
+        <div className="row">          
+          <div class="col-md-auto">Số cặp trùng {resultPairs.length || ''}</div>
+          <div class="col"></div>
+          <div class="col-md-auto">{shareButtons}</div>
+        </div>
       </div>
       {loading ? <div className="sr-list-container centered-container"> <h2>Loading...</h2> </div> : resultPairsRenderer()}
     </div >
-
   )
 }
 
