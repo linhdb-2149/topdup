@@ -1,13 +1,10 @@
 import React, { useContext, useEffect, useState } from "react"
 import { IconContext } from "react-icons"
 import { FaCheck, FaHashtag, FaTimes } from "react-icons/fa"
-import DupReportService from "./dup-report.service"
-import { AuthContext } from "../auth/auth-context"
-import ReactTooltip from "react-tooltip"
-import moment from "moment"
-import DupCompare from "../dup-compare/dup-compare"
-import { Button } from "react-bootstrap"
 import { Link } from 'react-router-dom'
+import ReactTooltip from "react-tooltip"
+import { AuthContext } from "../auth/auth-context"
+import DupReportService from "./dup-report.service"
 
 export const DupReportList = (props) => {
   const [simReports, setSimReports] = useState({ ...props.simReports })
@@ -57,10 +54,10 @@ export const DupReportList = (props) => {
       <div className="sim-report-row">
         <div className="sr-title-container">
           <div className="sr-title">
-            <span>{articleA}</span>
+            <span><a href={urlA} target="_blank"> {articleA} </a></span>
           </div>
           <div className="sr-title">
-            <span>{articleB}</span>
+            <span><a href={urlB} target="_blank"> {articleB} </a></span>
           </div>
         </div>
         <ReactTooltip type="warning" />

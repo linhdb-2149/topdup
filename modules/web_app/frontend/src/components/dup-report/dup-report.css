@@ -98,6 +98,14 @@
   align-items: center;
 }
 
+.sr-title a:link {
+  color: black;
+}
+
+.sr-title a:visited {
+  color: black;
+}
+
 .sr-title span {
   overflow: hidden;
   text-overflow: ellipsis;
