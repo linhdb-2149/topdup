@@ -18,6 +18,7 @@ const NavigationBar = (props) => {
           <Navbar.Brand className="topdup-brand" href="/">
             TopDup
           </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="mr-auto" activeKey={location.pathname}></Nav>
             <Nav className="topdup-nav-items">
