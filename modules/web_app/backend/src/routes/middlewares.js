@@ -49,26 +49,25 @@ export const requiredField = async (req, response, body, params, query, next) =>
   const queryChecked = fieldValidation(req.query, query)
   const paramChecked = fieldValidation(req.params, params)
 
+  const jsonResponse = {}
+
   if (bodyChecked) {
-    response
-      .status(CODE.MISSING_BODY)
-      .json({ message: `Missing! You are missing body field: [${bodyChecked}]` })
-    return
+    jsonResponse.status = CODE.MISSING_BODY
+    jsonResponse.message = `Missing! You are missing body field: [${bodyChecked}]`
   }
 
   if (queryChecked) {
-    response
-      .status(CODE.MISSING_QUERY)
-      .json({ message: `Missing! You are missing body field: [${queryChecked}]` })
-    return
+    jsonResponse.status = CODE.MISSING_QUERY
+    jsonResponse.message = `Missing! You are missing query field: [${bodyChecked}]`
   }
 
   if (paramChecked) {
-    response
-      .status(CODE.MISSING_QUERY)
-      .json({ message: `Missing! You are missing body field: [${paramChecked}]` })
-    return
+    jsonResponse.status = CODE.MISSING_BODY
+    jsonResponse.message = `Missing! You are missing param field: [${bodyChecked}]`
   }
+
+  response.jsonResponse = jsonResponse
+  response.status(jsonResponse.status).json(jsonResponse)
 
   next()
 }
@@ -77,26 +76,26 @@ export const validateField = async (req, response, next) => {
   const bodyChecked = Joi.validate(req.body, schema)
   const queryChecked = Joi.validate(req.query, schema)
   const paramChecked = Joi.validate(req.params, schema)
+
+  const jsonResponse = {}
+
   if (bodyChecked.error) {
-    response
-      .status(CODE.INVALID_PARAMS)
-      .json({ message: `Lỗi định dạng dữ liệu - ${bodyChecked.error.details}` })
-    return
+    jsonResponse.status = CODE.MISSING_BODY
+    jsonResponse.message = `Lỗi định dạng dữ liệu - ${bodyChecked.error.details}`
   }
 
   if (queryChecked.error) {
-    response
-      .status(CODE.INVALID_QUERY)
-      .json({ message: `Lỗi định dạng dữ liệu - ${queryChecked.error.details}` })
-    return
+    jsonResponse.status = CODE.INVALID_QUERY
+    jsonResponse.message = `Lỗi định dạng dữ liệu - ${queryChecked.error.details}`
   }
 
   if (paramChecked.error) {
-    response
-      .status(CODE.MISSING_BODY)
-      .json({ message: `Lỗi định dạng dữ liệu - ${paramChecked.error.details}` })
-    return
+    jsonResponse.status = CODE.INVALID_PARAMS
+    jsonResponse.message = `Lỗi định dạng dữ liệu - ${paramChecked.error.details}`
   }
+
+  response.jsonResponse = jsonResponse
+  response.status(jsonResponse.status).json(jsonResponse)
 
   next()
 }

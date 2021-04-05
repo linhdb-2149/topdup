@@ -1,4 +1,5 @@
 import { CODE } from "../constants/index.js"
+import { logger } from './../app'
 import createPool from "./pool.js"
 
 const pool = createPool(
@@ -20,7 +21,10 @@ const getSimRecordById = async (id, userId) => {
 
     console.log('foundSimReport', foundSimReport)
 
-    if (!foundSimReport) return
+    if (!foundSimReport) {
+      logger.error(`Sim report found with id ${id}`)
+      return
+    }
 
     const articleAId = foundSimReport['document_id_A']
     const articleBId = foundSimReport['document_id_B']
@@ -54,6 +58,7 @@ const getSimRecordById = async (id, userId) => {
       votedOption: foundVote && foundVote['voted_option']
     }
   } catch (error) {
+    logger.error(error)
     throw (error)
   }
 }
@@ -126,6 +131,7 @@ const applyVote = async (request, response) => {
     console.log('updateSimReport', updateSimReport)
     response.status(200).json(updateSimReport)
   } catch (error) {
+    logger.error(error)
     throw error
   }
 }

@@ -1,4 +1,5 @@
 import { CODE } from "../constants/index.js"
+import { logger } from "./../app"
 
 const axios = require('axios')
 
@@ -23,10 +24,10 @@ const getCompareResults = async (request, response) => {
       response.status(CODE.SUCCESS).send(result.data)
     })
     .catch((error) => {
-      console.log(error.response && error.response.data)
+      logger.error(error.response && error.response.data)
       const responseData = error.response && error.response.data
       response.status(CODE.ERROR).send(responseData)
-    })  
+    })
 }
 
 export default {
