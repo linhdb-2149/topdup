@@ -1,5 +1,7 @@
 .dup-compare-container {
   width: 1200px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .dup-compare-title {

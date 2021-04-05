@@ -50,6 +50,60 @@ export const DupReportList = (props) => {
     const voteItemClassName = value => "sr-vote-item " + (simReport["votedOption"] === value ? "selected" : "")
     const voteTooltip = authContext.isLoggedIn ? '' : 'Đăng nhập để vote'
     const { articleA, articleB, articleANbVotes, articleBNbVotes, domainA, domainB, createdDateA, createdDateB, urlA, urlB } = simReport
+    const voteForABtn = (
+      <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+        <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+          disabled={!authContext.isLoggedIn}
+          onClick={() => applyVote(simReport, 1)}>
+          {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+        </button>
+      </div>
+    )
+
+    const voteForBBtn = (
+      <div className={voteItemClassName(2)} data-tip={voteTooltip}>
+        <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+          data-tip={voteTooltip}
+          disabled={!authContext.isLoggedIn}
+          onClick={() => applyVote(simReport, 2)}>
+          {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+        </button>
+      </div>
+    )
+
+    const errorVoteBtn = (
+      <div className={voteItemClassName(3)} data-tip={voteTooltip}>
+        <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
+          data-tip={voteTooltip}
+          disabled={!authContext.isLoggedIn}
+          onClick={() => applyVote(simReport, 3)}>
+          {iconRenderer(FaTimes, "#EF5A5A")}
+        </button>
+      </div>
+    )
+
+    const irrVoteBtn = (
+      <div className={voteItemClassName(4)} data-tip={voteTooltip}>
+        <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
+          data-tip={voteTooltip}
+          disabled={!authContext.isLoggedIn}
+          onClick={() => applyVote(simReport, 4)}>
+          {iconRenderer(FaHashtag, "#F69E0C")}
+        </button>
+      </div>
+    )
+
+    const voteBlock = (
+      <div className="sr-vote-container">
+        <div className="sr-vote-check-container">
+          {voteForABtn}
+          {voteForABtn}
+        </div>
+        {errorVoteBtn}
+        {irrVoteBtn}
+      </div>
+    )
+
     return (
       <div className="sim-report-row">
         <div className="sr-title-container">
@@ -61,44 +115,9 @@ export const DupReportList = (props) => {
           </div>
         </div>
         <ReactTooltip type="warning" />
-        <div className="sr-vote-container">
-          <div className="sr-vote-check-container">
-            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
-              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-                disabled={!authContext.isLoggedIn}
-                onClick={() => applyVote(simReport, 1)}>
-                {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-              </button>
-            </div>
-            <div className={voteItemClassName(2)} data-tip={voteTooltip}>
-              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-                data-tip={voteTooltip}
-                disabled={!authContext.isLoggedIn}
-                onClick={() => applyVote(simReport, 2)}>
-                {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-              </button>
-            </div>
-          </div>
-          <div className={voteItemClassName(3)} data-tip={voteTooltip}>
-            <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
-              data-tip={voteTooltip}
-              disabled={!authContext.isLoggedIn}
-              onClick={() => applyVote(simReport, 3)}>
-              {iconRenderer(FaTimes, "#EF5A5A")}
-            </button>
-          </div>
-          <div className={voteItemClassName(4)} data-tip={voteTooltip}>
-            <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
-              data-tip={voteTooltip}
-              disabled={!authContext.isLoggedIn}
-              onClick={() => applyVote(simReport, 4)}>
-              {iconRenderer(FaHashtag, "#F69E0C")}
-            </button>
-          </div>
-        </div>
+        {voteBlock}
         <div className="sr-domain-date">
           <div className="col-sm-6">
-
             <div className="row other">{domainA}</div>
             <div className="row other">{domainB}</div>
           </div>
@@ -110,7 +129,8 @@ export const DupReportList = (props) => {
         <div className="sr-compare">
           <Link to={{
             pathname: '/dup-compare',
-            search: `?sourceUrl=${urlA}&targetUrl=${urlB}`
+            search: `?sourceUrl=${urlA}&targetUrl=${urlB}`,
+            state: { simReport: simReport }
           }}>
             <button class="btn btn-outline-secondary">So sánh</button>
           </Link>

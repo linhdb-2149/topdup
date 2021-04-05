@@ -1,13 +1,17 @@
 import * as _ from 'lodash'
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
+import { IconContext } from 'react-icons'
+import { FaCheck, FaFacebookSquare, FaHashtag, FaTimes, FaTwitterSquare } from 'react-icons/fa'
 import { useLocation } from "react-router-dom"
+import { FacebookShareButton, TwitterShareButton } from 'react-share'
+import ReactTooltip from 'react-tooltip'
 import { Severity, TopDup } from "../../shared/constants"
+import ReactIconRender from '../../shared/react-icon-renderer'
 import { ToastService } from "../../shared/toast.service"
+import { AuthContext } from '../auth/auth-context'
+import DupReportService from '../dup-report/dup-report.service'
 import "./dup-compare.css"
 import DupCompareService from "./dup-compare.service"
-import { FacebookShareButton, TwitterShareButton, EmailShareButton } from 'react-share'
-import ReactIconRender from '../../shared/react-icon-renderer'
-import { FaFacebookSquare, FaTwitterSquare } from 'react-icons/fa'
 
 const queryString = require('query-string')
 
@@ -24,7 +28,12 @@ const DupCompare = (props) => {
   const _targetUrl = queryParam.targetUrl || ''
   const _sourceText = queryParam.sourceText || ''
   const _targetText = queryParam.targetText || ''
+  const _simReport = (routeInfo.state || {}).simReport
+  const authContext = useContext(AuthContext)
+  const dupReportService = new DupReportService()
 
+  const [isVisibleVoteBlock, setIsVisibleVoteBlock] = useState(_simReport !== undefined)
+  const [simReport, setSimReport] = useState(_simReport || {})
   const defaultModeA = _sourceUrl ? Mode.Url : Mode.Text
   const defaultModeB = _targetUrl ? Mode.Url : Mode.Text
   const [sourceMode, setSourceMode] = useState(defaultModeA)
@@ -67,18 +76,41 @@ const DupCompare = (props) => {
     console.log('shareUrl: ', shareUrl)
 
     setLoading(true)
+    setIsVisibleVoteBlock(false)
     setCompareResult({})
     simCheckService.getSimilarityResults(compareOption)
       .then(response => {
         const responseData = response.data || {}
         const compareResult = responseData.results || {}
+        const isVisibleVoteBlock = (sourceMode === Mode.Url)
+          && (targetMode === Mode.Url)
+          && (simReport.urlA === sourceContent)
+          && (simReport.urlB === targetContent)
         setCompareResult(compareResult)
+        setIsVisibleVoteBlock(isVisibleVoteBlock)
       })
       .catch((error) => {
         toastService.displayToast(error.response, Severity.Error)
         setCompareResult({})
       })
       .finally(_ => setLoading(false))
+  }
+
+  const applyVote = (simReport, votedOption) => {
+    const user = authContext.getUser()
+    if (user) {
+      dupReportService.applyVote(simReport, votedOption, user.id)
+        .then(result => {
+          const updatedSimReport = result.data
+          setSimReport({
+            ...simReport,
+            ...updatedSimReport
+          })
+        })
+        .catch(error => {
+          throw (error)
+        })
+    }
   }
 
   useEffect(() => {
@@ -158,6 +190,59 @@ const DupCompare = (props) => {
     })
   }
 
+  const iconRenderer = (IconComponent, color) => {
+    return (
+      <IconContext.Provider value={{ color: color, className: "global-class-name" }}>
+        <IconComponent />
+      </IconContext.Provider>
+    )
+  }
+
+  const voteBlock = () => {
+    if (!isVisibleVoteBlock) return ''
+    const voteItemClassName = value => "sr-vote-item " + (simReport["votedOption"] === value ? "selected" : "")
+    const voteTooltip = authContext.isLoggedIn ? '' : 'Đăng nhập để vote'
+    const { articleANbVotes, articleBNbVotes } = simReport
+    return (
+      <>
+        <ReactTooltip type="warning" />
+        <div className="layout-grid">
+          <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+            <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+              disabled={!authContext.isLoggedIn}
+              onClick={() => applyVote(simReport, 1)}>
+              {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+            </button>
+          </div>
+          <div className={voteItemClassName(2)} data-tip={voteTooltip}>
+            <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+              data-tip={voteTooltip}
+              disabled={!authContext.isLoggedIn}
+              onClick={() => applyVote(simReport, 2)}>
+              {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+            </button>
+          </div>
+          <div className={voteItemClassName(3)} data-tip={voteTooltip}>
+            <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
+              data-tip={voteTooltip}
+              disabled={!authContext.isLoggedIn}
+              onClick={() => applyVote(simReport, 3)}>
+              {iconRenderer(FaTimes, "#EF5A5A")}
+            </button>
+          </div>
+          <div className={voteItemClassName(4)} data-tip={voteTooltip}>
+            <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
+              data-tip={voteTooltip}
+              disabled={!authContext.isLoggedIn}
+              onClick={() => applyVote(simReport, 4)}>
+              {iconRenderer(FaHashtag, "#F69E0C")}
+            </button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const shareButtons = (
     <>
       <FacebookShareButton
@@ -202,10 +287,11 @@ const DupCompare = (props) => {
         <button type="button" className="btn btn-warning compare-btn" onClick={checkSimilarity}>So sánh</button>
       </div>
       <div class="full-width margin-bottom--xs">
-      <h4>Kết quả</h4>
-        <div className="row">          
-          <div class="col-md-auto">Số cặp trùng {resultPairs.length || ''}</div>
-          <div class="col"></div>
+        <h4>Kết quả</h4>
+        <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
+          <div class="col-md-auto">Số cặp trùng {resultPairs.length || ''}</div>
+          <div class="col">  </div>
+          <div class="col-md-auto"> {voteBlock()} </div>
           <div class="col-md-auto">{shareButtons}</div>
         </div>
       </div>
