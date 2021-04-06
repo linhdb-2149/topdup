@@ -9,6 +9,8 @@ export class Pagination extends Component {
       pageNumbers.push(i)
     }
 
+    const maxPage = pageNumbers[pageNumbers.length - 1]
+
     const displayPageNumbers = currentPage <= 5
       ? pageNumbers.slice(0, 10)
       : pageNumbers.slice(currentPage - 5, currentPage + 5)
@@ -17,7 +19,7 @@ export class Pagination extends Component {
       <nav>
         <ul className="pagination justify-content-center">
           <li className="page-item">
-            <button className="pagination-btn" onClick={() => prevPage()}>&laquo;</button>
+            <button className="pagination-btn" disabled={currentPage === 1} onClick={() => prevPage()}>&laquo;</button>
           </li>
           {
             displayPageNumbers.map(num => {
@@ -30,7 +32,7 @@ export class Pagination extends Component {
             })
           }
           <li className="page-item">
-            <button className="pagination-btn" onClick={() => nextPage()}>&raquo;</button>
+            <button className="pagination-btn" disabled={currentPage === maxPage} onClick={() => nextPage()}>&raquo;</button>
           </li>
         </ul>
       </nav>

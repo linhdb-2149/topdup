@@ -285,11 +285,16 @@
   height: 35px;
 }
 
-.pagination-btn:hover {
+.pagination-btn:hover:not([disabled]) {
   background-color: grey;
 }
 
 .pagination-btn.selected {
   background-color: black;
   color: white;
+}
+
+.pagination-btn:disabled {
+  pointer-events: auto;
+  color: grey;
 }
