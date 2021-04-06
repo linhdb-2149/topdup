@@ -1,14 +1,16 @@
 # coding=utf-8
-import sys, os
+import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-import pickle
 import os
-from tqdm.auto import tqdm
+import pickle
 from pathlib import Path
-import jsonpickle
-from data_wranglers import datalayer,data_prep
 
+import jsonpickle
+from data_wranglers import data_prep, datalayer
+from tqdm.auto import tqdm
 
 
 def main():
@@ -28,8 +30,10 @@ def main():
     sqls = []
     for d in tqdm(post_data):
         content, meta = data_prep(jsonpickle.loads(d))
-        sqlcmd = "INSERT INTO post_dataset(url,content) " \
-                " VALUES('" + meta["url"] + "','" + datalayer.cleantext(content) + "')"
+        sqlcmd = (
+            "INSERT INTO post_dataset(url,content) "
+            " VALUES('" + meta["url"] + "','" + datalayer.cleantext(content) + "')"
+        )
         sqls.append((sqlcmd))
 
     datalayer.executesqls(sqls)
