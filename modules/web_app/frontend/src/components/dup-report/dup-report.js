@@ -16,7 +16,7 @@ class DupReport extends Component {
 
     const searchStr = props.location.search || ''
     const queryParam = queryString.parse(searchStr) || {}
-    const _currentPage = queryParam['page']
+    const _currentPage = parseInt(queryParam['page'])
 
     this.state = {
       userData: props.userData,
@@ -76,8 +76,7 @@ class DupReport extends Component {
     })
     this.setState(prevState => ({
       ...prevState,
-      simReports: filteredReports,
-      currentPage: 1
+      simReports: filteredReports
     }))
   }
 

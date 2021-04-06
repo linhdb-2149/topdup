@@ -4,6 +4,7 @@ export class Pagination extends Component {
   render() {
     const { reportsPerPage, totalReports, paginate, nextPage, prevPage, currentPage } = this.props
     const pageNumbers = []
+    console.log('Pagination: currentPage', currentPage)
 
     for (let i = 1; i <= Math.ceil(totalReports / reportsPerPage); i++) {
       pageNumbers.push(i)

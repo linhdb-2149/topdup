@@ -152,3 +152,9 @@ span {
   height: 30px;
   width: 30px;
 }
+
+.ellipsis-container {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
