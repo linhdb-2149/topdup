@@ -16,7 +16,7 @@ class TfidfDocVectorizer(DocVectorizerBase):
 
         Args:
             vector_dim (int): Number dimentions of embedding vectors for 1st phase.
-                              Defaults to 128.
+                Defaults to 128.
             **kwargs: Arbitrary keyword arguments.
         """
 
@@ -44,7 +44,8 @@ class TfidfDocVectorizer(DocVectorizerBase):
 
     def fit_transform(self, train_documents: list = None):
         """Learn vocabulary and idf, return embedding matrix of training documents.
-            This is equivalent to fit followed by transform, but more efficiently implemented.
+            This is equivalent to fit followed by transform,
+            but more efficiently implemented.
 
         Args:
             train_documents (list): List of training documents for vectorizer. Defaults to None.
@@ -61,7 +62,8 @@ class TfidfDocVectorizer(DocVectorizerBase):
         return transform_vector
 
     def transform(self, documents: list = None):
-        """Transform `documents` into the tf-idf vectorizer and return a list of vector and convert to dense.
+        """Transform `documents` into the tf-idf vectorizer and return
+        a list of vector and convert to dense.
 
         Args:
             documents (list): List of documents to vectorize.

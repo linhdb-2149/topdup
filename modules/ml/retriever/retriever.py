@@ -17,17 +17,15 @@ class Retriever:
         candidate_vectorizer: DocVectorizerBase = None,
         retriever_vectorizer: DocVectorizerBase = None,
     ):
-        """Init an instance of a Retriever
+        """Inits an instance of a Retriever.
 
-        Args:
-            document_store (FAISSDocumentStore):
-                An instance of DocumentStore where data is indexed and stored.
-                Defaults to None.
-            candidate_vectorizer (DocVectorizerBase):
-                An instance of vectorizer to convert QUERY documents (in database) to embedding.
-                Defaults to None.
-            retriever_vectorizer (DocVectorizerBase): An instance of vectorizer to convert
-                                                 CANDIDATE documents to embeddings. Defaults to None.
+        Attributes:
+            document_store (FAISSDocumentStore, optional): An instance of DocumentStore
+                where data is indexed and stored. Defaults to None.
+            candidate_vectorizer (DocVectorizerBase, optional): An instance of vectorizer
+                to convert QUERY documents (in database) to embedding. Defaults to None.
+            retriever_vectorizer (DocVectorizerBase, optional): An instance of vectorizer
+                to convert CANDIDATE documents to embeddings. Defaults to None.
         """
 
         self.document_store: FAISSDocumentStore = document_store
@@ -145,8 +143,7 @@ class Retriever:
     def update_embeddings(
         self, retrain: bool = True, save_path: str = None, sql_url: str = None
     ):
-        """
-        Update embeddings of documents with candidate vectorizer to `document_store`.
+        """Updates embeddings of documents with candidate vectorizer to `document_store`.
         """
         if retrain:
             if not self.candidate_vectorizer.is_trained:
@@ -191,7 +188,7 @@ class Retriever:
         return query_embs, score_matrix, vector_id_matrix
 
     def _calc_scores_for_candidates(self, query_doc, candidate_ids):
-        """Caculate scores for each candidate in 2nd phase
+        """Caculates scores for each candidate in 2nd phase
 
         Args:
             query_doc (str, optional): The document to query. Defaults to None.
@@ -230,8 +227,7 @@ class Retriever:
         index: str = None,
         filters=None,
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve batch of most k similar docs to given batch of documents
+        """Retrieves batch of most k similar docs of given batch of documents
 
         Args:
             query_docs ([type]): [description]

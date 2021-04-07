@@ -22,7 +22,7 @@ class Document:
         Note that there can be multiple Documents originating from one file (e.g. PDF),
         if you split the text into smaller passages. We'll have one Document per passage in this case.
 
-        Args:
+        Attributes:
             text (str): Text of the document
             id (str, optional): ID used within the DocumentStore. Defaults to None.
             score (float, optional): Retriever's query score for a retrieved document. Defaults to None.

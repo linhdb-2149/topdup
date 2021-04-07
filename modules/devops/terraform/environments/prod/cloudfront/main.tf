@@ -1,7 +1,7 @@
 module "prod_cloudfront" {
-  source = "../../../terraform-aws-modules/cloudfront/aws"
+  source = "../../../modules/terraform-aws-cloudfront"
 
-  aliases = ["topdop.org"]
+  aliases = ["topdup.org"]
 
   comment             = "Topdup webapp"
   enabled             = true
@@ -12,48 +12,42 @@ module "prod_cloudfront" {
 
   create_origin_access_identity = true
   origin_access_identities = {
-    s3_bucket_one = "My awesome CloudFront can access"
+    s3_bucket_one = "topdup-prod-frontend"
+  }
+
+  viewer_certificate = {
+    acm_certificate_arn = "arn:aws:acm:us-east-1:221423461835:certificate/5286e47b-b67d-486c-a3ad-38495850c207"
+    ssl_support_method  = "sni-only"
   }
 
   origin = {
-    something = {
-      domain_name = "something.example.com"
-      custom_origin_config = {
-        http_port              = 80
-        https_port             = 443
-        origin_protocol_policy = "match-viewer"
-        origin_ssl_protocols   = ["TLSv1"]
-      }
-    }
-
-    s3_one = {
-      domain_name = "my-s3-bycket.s3.amazonaws.com"
+    topdup-s3-frontend = {
+      domain_name = "topdup-prod-frontend.s3.amazonaws.com"
       s3_origin_config = {
         origin_access_identity = "s3_bucket_one"
       }
     }
   }
-  
+
   default_cache_behavior = {
-    target_origin_id       = "something"
-    viewer_protocol_policy = "allow-all"
+    target_origin_id       = "topdup-s3-frontend"
+    viewer_protocol_policy = "redirect-to-https"
 
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     cached_methods  = ["GET", "HEAD"]
     compress        = true
     query_string    = true
   }
-  
-  ordered_cache_behavior = [
+  custom_error_response = [
     {
-      path_pattern           = "/static/*"
-      target_origin_id       = "s3_one"
-      viewer_protocol_policy = "redirect-to-https"
-
-      allowed_methods = ["GET", "HEAD", "OPTIONS"]
-      cached_methods  = ["GET", "HEAD"]
-      compress        = true
-      query_string    = true
-    }
+      error_code = "403"  
+      response_page_path = "/index.html"
+      response_code = "403"
+    },
+    {
+      error_code = "404"  
+      response_page_path = "/index.html"
+      response_code = "404"
+    }  
   ]
 }

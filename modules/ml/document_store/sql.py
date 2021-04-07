@@ -59,29 +59,35 @@ class MetaORM(ORMBase):
 class SQLDocumentStore(BaseDocumentStore):
     def __init__(
         self,
-        url: str = "postgresql+psycopg2://",
+        url: str,
         index: str = "document",
         label_index: str = "label",
         update_existing_documents: bool = False,
         batch_size: int = 1000,
     ):
-        """
-        An SQL backed DocumentStore. Currently supports SQLite, PostgreSQL and MySQL backends.
+        """An SQL backed DocumentStore. Currently supports SQLite, PostgreSQL and MySQL backends.
 
-        :param url: URL for SQL database as expected by SQLAlchemy. More info here: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
-        :param index: The documents are scoped to an index attribute that can be used when writing, querying, or deleting documents.
-                      This parameter sets the default value for document index.
-        :param label_index: The default value of index attribute for the labels.
-        :param update_existing_documents: Whether to update any existing documents with the same ID when adding
-                                          documents. When set as True, any document with an existing ID gets updated.
-                                          If set to False, an error is raised if the document ID of the document being
-                                          added already exists. Using this parameter could cause performance degradation
-                                          for document insertion.
-        :param batch_size: Maximum number of variable parameters and rows fetched in a single SQL statement,
-                           to help in excessive memory allocations. In most methods of the DocumentStore this means number of documents fetched in one query.
-                           Tune this value based on host machine main memory.
-                           For SQLite versions prior to v3.32.0 keep this value less than 1000.
-                           More info refer: https://www.sqlite.org/limits.html
+        Attributes:
+            url (str): URL for SQL database as expected by SQLAlchemy.
+                Defaults to "postgresql+psycopg2://".
+                More info here: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls.
+            index (str, optional): The documents are scoped to an index attribute that
+                can be used when writing, querying, or deleting documents.
+                Defaults to "document".
+            label_index (str, optional): The default value of index attribute for the labels.
+                Defaults to "label".
+            update_existing_documents (bool, optional): Whether to update any existing
+                documents with the same ID when adding documents.
+                When set as True, any document with an existing ID gets updated.
+                If set to False, an error is raised if the document ID of the document
+                being added already exists. Using this parameter could cause
+                performance degradation for document insertion. Defaults to False.
+            batch_size (int, optional): Maximum number of variable parameters and rows
+                fetched in a single SQL statement, to help in excessive memory allocations.
+                In most methods of the DocumentStore this means number of documents fetched in one query.
+                Tune this value based on host machine main memory.
+                For SQLite versions prior to v3.32.0 keep this value less than 1000.
+                More info refer: https://www.sqlite.org/limits.html. Defaults to 1000.
         """
         engine = create_engine(url)
         self.engine = engine
@@ -98,7 +104,7 @@ class SQLDocumentStore(BaseDocumentStore):
     def get_document_by_id(
         self, id: str, index: Optional[str] = None
     ) -> Optional[Document]:
-        """Fetch a document by specifying its text id string"""
+        """Fetches a document by specifying its text id string"""
         documents = self.get_documents_by_id([id], index)
         document = documents[0] if documents else None
         return document
@@ -106,7 +112,7 @@ class SQLDocumentStore(BaseDocumentStore):
     def get_documents_by_id(
         self, ids: List[str], index: Optional[str] = None
     ) -> List[Document]:
-        """Fetch documents by specifying a list of text id strings"""
+        """Fetches documents by specifying a list of text id strings"""
         index = index or self.index
 
         documents = []
@@ -124,7 +130,7 @@ class SQLDocumentStore(BaseDocumentStore):
     def get_documents_by_vector_ids(
         self, vector_ids: List[str], index: Optional[str] = None
     ):
-        """Fetch documents by specifying a list of text vector id strings"""
+        """Fetches documents by specifying a list of text vector id strings"""
 
         index = index or self.index
 
@@ -149,7 +155,7 @@ class SQLDocumentStore(BaseDocumentStore):
         from_time: datetime = None,
         to_time: datetime = None,
     ) -> List[Document]:
-        """Fetch documents by specifying a threshold to filter the similarity scores in meta data"""
+        """Fetches documents by specifying a threshold to filter the similarity scores in meta data"""
 
         if not from_time and not to_time:  # get all
             meta = self.session.query(MetaORM)
@@ -214,14 +220,21 @@ class SQLDocumentStore(BaseDocumentStore):
         filters: Optional[Dict[str, List[str]]] = None,
         return_embedding: Optional[bool] = None,
     ) -> List[Document]:
-        """
-        Get documents from the DocumentStore.
+        """Gets all documents from the DocumentStore.
 
-        :param index: Name of the index to get the documents from. If None, the
-                      DocumentStore's default index (self.index) will be used.
-        :param filters: Optional filters to narrow down the documents to return.
-                        Example: {"name": ["some", "more"], "category": ["only_one"]}
-        :param return_embedding: Whether to return the document embeddings.
+        Args:
+            index (str, optional): Name of the index to get the documents from. If None,
+                DocumentStore's default index (self.index) will be used.
+                Defaults to None.
+            filters (Dict[str, List[str]], optional): Optional filters to narrow down
+                the documents to return.
+                Example: {"name": ["some", "more"], "category": ["only_one"]}.
+                Defaults to None.
+            return_embedding (bool, optional): Whether to return the document embeddings.
+                Defaults to None.
+
+        Returns:
+            List[Document]
         """
 
         index = index or self.index
@@ -269,18 +282,22 @@ class SQLDocumentStore(BaseDocumentStore):
     def write_documents(
         self, documents: Union[List[dict], List[Document]], index: Optional[str] = None
     ):
-        """
-          Indexes documents for later queries.
+        """Indexes documents for later queries.
 
-        :param documents: a list of Python dictionaries or a list of Haystack Document objects.
-                            For documents as dictionaries, the format is {"text": "<the-actual-text>"}.
-                            Optionally: Include meta data via {"text": "<the-actual-text>",
-                            "meta":{"name": "<some-document-name>, "author": "somebody", ...}}
-                            It can be used for filtering and is accessible in the responses of the Finder.
-          :param index: add an optional index attribute to documents. It can be later used for filtering. For instance,
-                        documents for evaluation can be indexed in a separate index than the documents for search.
+        Args:
+            documents (Union[List[dict], List[Document]]): a list of Python dictionaries
+                or a list of Haystack Document objects.
+                For documents as dictionaries, the format is {"text": "<the-actual-text>"}.
+                Optionally: Include meta data via {"text": "<the-actual-text>",
+                "meta":{"name": "<some-document-name>, "author": "somebody", ...}}
+                It can be used for filtering and is accessible in the responses of the Finder.
+            index (Optional[str], optional): add an optional index attribute to documents.
+                It can be later used for filtering.
+                For instance, documents for evaluation can be indexed in a separate
+                index than the documents for search. Defaults to None.
 
-          :return: None
+        Raises:
+            Exception: raised when session can not commit.
         """
         # TODO handle Iterable type
         index = index or self.index
@@ -328,8 +345,7 @@ class SQLDocumentStore(BaseDocumentStore):
                 raise ex
 
     def reset_vector_ids(self, index: Optional[str] = None):
-        """
-        Set vector IDs for all documents as None
+        """Sets vector IDs for all documents as None
         """
         index = index or self.index
         self.session.query(DocumentORM).filter_by(index=index).update(
@@ -340,11 +356,15 @@ class SQLDocumentStore(BaseDocumentStore):
     def update_vector_ids(
         self, vector_id_map: Dict[str, str], index: Optional[str] = None
     ):
-        """
-        Update vector_ids for given document_ids.
+        """Updates vector_ids for given document_ids.
 
-        :param vector_id_map: dict containing mapping of document_id -> vector_id.
-        :param index: filter documents by the optional index attribute for documents in database.
+        Args:
+            vector_id_map (Dict[str, str]): dict containing mapping of document_id -> vector_id.
+            index (Optional[str], optional): filter documents by the optional index attribute for documents in database.
+                                             Defaults to None.
+
+        Raises:
+            Exception: raised when session can not commit.
         """
         index = index or self.index
         for chunk_map in self.chunked_dict(vector_id_map, size=self.batch_size):
@@ -362,8 +382,7 @@ class SQLDocumentStore(BaseDocumentStore):
                 raise ex
 
     def update_document_meta(self, id: str, meta: Dict[str, str]):
-        """
-        Update the metadata dictionary of a document by specifying its string id
+        """Updates the metadata dictionary of a document by specifying its string id
         """
         query = self.session.query(MetaORM).filter_by(document_id=id)
         current_meta = dict()
@@ -386,8 +405,7 @@ class SQLDocumentStore(BaseDocumentStore):
         filters: Optional[Dict[str, List[str]]] = None,
         index: Optional[str] = None,
     ) -> int:
-        """
-        Return the number of documents in the DocumentStore.
+        """Returns the number of documents in the DocumentStore.
         """
         index = index or self.index
         query = self.session.query(DocumentORM).filter_by(index=index)
@@ -406,7 +424,7 @@ class SQLDocumentStore(BaseDocumentStore):
         to_time: datetime = None,
         index: Optional[str] = None,
     ) -> List[str]:
-        """Return list of document ids in the DocumentStore.
+        """Returns list of document ids in the DocumentStore.
 
         Args:
             from_time (datetime, optional). Defaults to None.
@@ -460,14 +478,17 @@ class SQLDocumentStore(BaseDocumentStore):
         index: Optional[str] = None,
         filters: Optional[Dict[str, List[str]]] = None,
     ):
-        """
-        Delete documents in an index. All documents are deleted if no filters are passed.
+        """Deletes documents in an index. All documents are deleted if no filters are passed.
 
-        :param index: Index name to delete the document from.
-        :param filters: Optional filters to narrow down the documents to be deleted.
-        :return: None
-        """
+        Args:
+            index (str, optional): Index name to delete the document from.
+                Defaults to None.
+            filters (Dict[str, List[str]], optional): Optional filters to narrow down
+                the documents to be deleted. Defaults to None.
 
+        Raises:
+            NotImplementedError: Delete by filters is not implemented for SQLDocumentStore.
+        """
         if filters:
             raise NotImplementedError(
                 "Delete by filters is not implemented for SQLDocumentStore."
