@@ -13,6 +13,7 @@ const NavigationBar = (props) => {
 
   return (
     <>
+
       <Navbar expand="lg" fixed="top">
         <Container>
           <Navbar.Brand className="topdup-brand" href="/">
@@ -21,15 +22,23 @@ const NavigationBar = (props) => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="mr-auto" activeKey={location.pathname}></Nav>
             <Nav className="topdup-nav-items">
-              <Nav.Link href="/about">Giới thiệu</Nav.Link>
-              <Nav.Link href="/dup-report">DupReport</Nav.Link>
-              <Nav.Link href="/dup-compare">DupCompare</Nav.Link>
+              <div>
+                <Nav.Link href="/about">Giới thiệu</Nav.Link>
+              </div>
+              <div>
+                <Nav.Link href="/dup-report">DupReport</Nav.Link>
+              </div>
+              <div>
+                <Nav.Link href="/dup-compare">DupCompare</Nav.Link>
+              </div>
               <Authentication setUserData={props.setUserData} />
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
+
     </>
+
   );
 };
 
