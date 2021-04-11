@@ -354,7 +354,7 @@
 }
 
   .header-date{
-    max-width: 83px !important;
+    max-width: 150px !important;
     flex-grow: 1 !important;
     font-size:12px !important;
   }
