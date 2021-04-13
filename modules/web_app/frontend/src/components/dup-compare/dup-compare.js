@@ -1,5 +1,7 @@
 import * as _ from 'lodash'
 import { useContext, useEffect, useState } from "react"
+import { Badge } from 'react-bootstrap'
+import RangeSlider from 'react-bootstrap-range-slider'
 import { IconContext } from 'react-icons'
 import { FaCheck, FaFacebookSquare, FaHashtag, FaTimes, FaTwitterSquare } from 'react-icons/fa'
 import { useLocation } from "react-router-dom"
@@ -39,6 +41,9 @@ const DupCompare = (props) => {
   const [sourceMode, setSourceMode] = useState(defaultModeA)
   const [targetMode, setTargetMode] = useState(defaultModeB)
 
+  // Similarity threshold set for results dipslay: 0.80
+  const [sScoreThreshold, setSScoreThreshold] = useState(0.80)
+
   const [sourceUrl, setSourceUrl] = useState(_sourceUrl)
   const [targetUrl, setTargetUrl] = useState(_targetUrl)
   const [sourceText, setSourceText] = useState(_sourceText)
@@ -47,6 +52,7 @@ const DupCompare = (props) => {
   const [sourceSegements, setSourceSegments] = useState([])
   const [targetSegements, setTargetSegments] = useState([])
   const [resultPairs, setResultPairs] = useState([])
+  const [filteredResults, setFilteredResults] = useState([])
   const [compareResult, setCompareResult] = useState({})
   const [shareUrl, setShareUrl] = useState('')
 
@@ -71,7 +77,7 @@ const DupCompare = (props) => {
     if (sourceMode === Mode.Text) queryParam['sourceText'] = sourceContent
     if (targetMode === Mode.Url) queryParam['targetUrl'] = targetContent
     if (targetMode === Mode.Text) queryParam['targetText'] = targetContent
-    setShareUrl(`${ TopDup.BaseUrl }/dup-compare?${ queryString.stringify(queryParam) }`)
+    setShareUrl(`${TopDup.BaseUrl}/dup-compare?${queryString.stringify(queryParam)}`)
 
     console.log('shareUrl: ', shareUrl)
 
@@ -119,10 +125,12 @@ const DupCompare = (props) => {
     const targetSegements = compareResult.segmentListB || []
     const resultPairs = compareResult.pairs || []
     const sortedResultPairs = _.orderBy(resultPairs, ['similarityScore'], ['desc'])
+    const filteredResults = sortedResultPairs.filter(item => item.similarityScore >= sScoreThreshold)
     setSourceSegments(sourceSegements)
     setTargetSegments(targetSegements)
     setResultPairs(sortedResultPairs)
-  }, [compareResult])
+    setFilteredResults(filteredResults)
+  }, [compareResult, sScoreThreshold])
 
   const getBtnClass = (sourceMode, btnLabel) => {
     return sourceMode === btnLabel
@@ -174,15 +182,34 @@ const DupCompare = (props) => {
     )
   }
 
+  const shareButtons = (
+    <>
+      <FacebookShareButton
+        url={shareUrl}
+        quote={props.text}>
+        <ReactIconRender className="social-share-btn" color={'#4267B2'} IconComponent={FaFacebookSquare} />
+      </FacebookShareButton>
+      <TwitterShareButton
+        url={shareUrl}
+        title={props.text}>
+        <ReactIconRender className="social-share-btn" color={'#1DA1F2'} IconComponent={FaTwitterSquare} />
+      </TwitterShareButton>
+    </>
+  )
+
   const resultPairsRenderer = () => {
-    return resultPairs.map(pair => {
+    return filteredResults.map(pair => {
       const sourceSegIdx = pair.segmentIdxA
       const targetSegIdx = pair.segmentIdxB
       return (
         <>
-          <div class="row margin-bottom--xs">
-            <div className="col layout-cell"> {resultRenderer(sourceSegements, sourceSegIdx)} </div>
-            <div className="col layout-cell"> {resultRenderer(targetSegements, targetSegIdx)} </div>
+          <div class="row margin-bottom--xs compare-item">
+            <div className="col layout-cell text-justify"> {resultRenderer(sourceSegements, sourceSegIdx)} </div>
+            <div className="col layout-cell text-justify"> {resultRenderer(targetSegements, targetSegIdx)} </div>
+            <div className="compare-item-info">
+              <span class="text-bold text-underline">{pair.similarityScore.toFixed(2)}</span>
+              {shareButtons}
+            </div>
           </div>
           <hr />
         </>
@@ -304,21 +331,6 @@ const DupCompare = (props) => {
     )
   }
 
-  const shareButtons = (
-    <>
-      <FacebookShareButton
-        url={shareUrl}
-        quote={props.text}>
-        <ReactIconRender className="social-share-btn" color={'#4267B2'} IconComponent={FaFacebookSquare} />
-      </FacebookShareButton>
-      <TwitterShareButton
-        url={shareUrl}
-        title={props.text}>
-        <ReactIconRender className="social-share-btn" color={'#1DA1F2'} IconComponent={FaTwitterSquare} />
-      </TwitterShareButton>
-    </>
-  )
-
   return (
     <div className="dup-compare-container">
       <div className="layout-grid margin-bottom--20">
@@ -344,18 +356,28 @@ const DupCompare = (props) => {
           </div>
         </div>
       </div>
-      <div className="layout-grid margin-bottom--20" style={{ 'justify-content': 'flex-end' }}>
+      <div className="layout-grid margin-bottom--30" style={{ 'justify-content': 'flex-end' }}>
         <button type="button" className="btn btn-warning compare-btn" onClick={checkSimilarity}>So sánh</button>
       </div>
-      <div class="full-width margin-bottom--xs">
-        <h4>Kết quả</h4>
-        {voteBlock()}
-        <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
-          <div class="col">Số cặp trùng {resultPairs.length || ''}</div>
-          <div class="col-md-auto">{shareButtons}</div>
+
+      <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
+        <div class="col-md-2 text-bold">Kết quả <Badge variant="secondary">{filteredResults.length}</Badge></div>
+        <div class="col-md-auto text-bold" style={{ 'margin-right': '-20px' }}>Score</div>
+        <div class="col-md-auto">
+          <RangeSlider
+            value={sScoreThreshold} min={0} max={1} step={0.01}
+            onChange={e => setSScoreThreshold(e.target.value)}
+            tooltipPlacement='top' tooltip="on"
+          />
         </div>
       </div>
+
       {loading ? <div className="sr-list-container centered-container"> <h2>Loading...</h2> </div> : resultPairsRenderer()}
+
+      <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
+        <div class="col"></div>
+        <div class="col-md-auto">{shareButtons}</div>
+      </div>
     </div >
   )
 }

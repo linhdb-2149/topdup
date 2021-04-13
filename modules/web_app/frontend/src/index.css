@@ -89,7 +89,6 @@ span {
   justify-content: center;
   margin-top: 70px;
   max-width: 1200px;
-  overflow: auto;
   padding-top: 50px;
   padding-bottom: 50px;
 }
@@ -128,6 +127,14 @@ span {
 
 .margin-bottom--20 {
   margin-bottom: 20px;
+}
+
+.margin-bottom--30 {
+  margin-bottom: 20px;
+}
+
+.margin-vertical--xs {
+  margin: 10px 0px;
 }
 
 .centered-container {
