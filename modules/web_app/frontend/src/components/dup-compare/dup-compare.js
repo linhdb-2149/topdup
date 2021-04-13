@@ -225,30 +225,131 @@ const DupCompare = (props) => {
     )
   }
 
+  const voteBlock = () => {
+    if (!isVisibleVoteBlock) return ''
+    const voteItemClassName = value => "sr-vote-item " + (simReport["votedOption"] === value ? "selected" : "")
+    const voteTooltip = authContext.isLoggedIn ? '' : 'Đăng nhập để vote'
+    const { articleANbVotes, articleBNbVotes } = simReport
+    return (
+      <>
+        <ReactTooltip type="warning" />
+
+        <div class="row justify-content-md-center">
+          <div className="col-md-auto centered-container flex-column">
+            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+              <button className="btn"
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 1)}>
+                {iconRenderer(FaCheck, "#3571FF")}
+              </button>
+            </div>
+            {articleANbVotes}
+          </div>
+          <div className="col-md-auto">
+            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+              <button className="btn"
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 3)}>
+                {iconRenderer(FaTimes, "#EF5A5A")}
+              </button>
+            </div>
+          </div>
+          <div className="col-md-auto">
+            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+              <button className="btn"
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 4)}>
+                {iconRenderer(FaHashtag, "#F69E0C")}
+              </button>
+            </div>
+          </div>
+          <div className="col-md-auto centered-container flex-column">
+            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+              <button className="btn"
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 2)}>
+                {iconRenderer(FaCheck, "#3571FF")}
+              </button>
+            </div>
+            {articleBNbVotes}
+          </div>
+        </div>
+        {/* 
+          <div className="layout-grid">
+            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 1)}>
+                {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+              </button>
+            </div>
+            <div className={voteItemClassName(2)} data-tip={voteTooltip}>
+              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+                data-tip={voteTooltip}
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 2)}>
+                {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+              </button>
+            </div>
+            <div className={voteItemClassName(3)} data-tip={voteTooltip}>
+              <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
+                data-tip={voteTooltip}
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 3)}>
+                {iconRenderer(FaTimes, "#EF5A5A")}
+              </button>
+            </div>
+            <div className={voteItemClassName(4)} data-tip={voteTooltip}>
+              <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
+                data-tip={voteTooltip}
+                disabled={!authContext.isLoggedIn}
+                onClick={() => applyVote(simReport, 4)}>
+                {iconRenderer(FaHashtag, "#F69E0C")}
+              </button>
+            </div>
+          </div> */}
+      </>
+    )
+  }
+
   // const voteBlock = () => {
-  //   if (!isVisibleVoteBlock) return ''
+  //   // if (!isVisibleVoteBlock) return ''
   //   const voteItemClassName = value => "sr-vote-item " + (simReport["votedOption"] === value ? "selected" : "")
   //   const voteTooltip = authContext.isLoggedIn ? '' : 'Đăng nhập để vote'
-  //   const { articleANbVotes, articleBNbVotes } = simReport
+  //   const {articleANbVotes, articleBNbVotes} = simReport
   //   return (
-  //     <>
+  //     <div className="layout-grid margin-bottom--xs">
   //       <ReactTooltip type="warning" />
-  //       <div className="layout-grid">
-  //         <div className={voteItemClassName(1)} data-tip={voteTooltip}>
-  //           <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-  //             disabled={!authContext.isLoggedIn}
-  //             onClick={() => applyVote(simReport, 1)}>
-  //             {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-  //           </button>
+  //       <div class="col" style={{ 'width': 'calc(100% - 200px)' }}>
+  //         <div class="row ellipsis-container">
+  //           <span><a href={sourceUrl} target="_blank"> {sourceUrl} </a></span>
   //         </div>
-  //         <div className={voteItemClassName(2)} data-tip={voteTooltip}>
-  //           <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-  //             data-tip={voteTooltip}
-  //             disabled={!authContext.isLoggedIn}
-  //             onClick={() => applyVote(simReport, 2)}>
-  //             {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-  //           </button>
+  //         <div class="row ellipsis-container">
+  //           <span><a href={targetUrl} target="_blank"> {targetUrl} </a></span>
   //         </div>
+  //       </div>
+  //       <div class="col-md-auto">
+  //         <div class="row">
+  //           <div className={voteItemClassName(1)} data-tip={voteTooltip}>
+  //             <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+  //               disabled={!authContext.isLoggedIn}
+  //               onClick={() => applyVote(simReport, 1)}>
+  //               {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+  //             </button>
+  //           </div>
+  //         </div>
+  //         <div class="row">
+  //           <div className={voteItemClassName(2)} data-tip={voteTooltip}>
+  //             <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
+  //               data-tip={voteTooltip}
+  //               disabled={!authContext.isLoggedIn}
+  //               onClick={() => applyVote(simReport, 2)}>
+  //               {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
+  //             </button>
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div class="col-md-auto">
   //         <div className={voteItemClassName(3)} data-tip={voteTooltip}>
   //           <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
   //             data-tip={voteTooltip}
@@ -257,6 +358,8 @@ const DupCompare = (props) => {
   //             {iconRenderer(FaTimes, "#EF5A5A")}
   //           </button>
   //         </div>
+  //       </div>
+  //       <div class="col-md-auto">
   //         <div className={voteItemClassName(4)} data-tip={voteTooltip}>
   //           <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
   //             data-tip={voteTooltip}
@@ -266,70 +369,9 @@ const DupCompare = (props) => {
   //           </button>
   //         </div>
   //       </div>
-  //     </>
+  //     </div>
   //   )
   // }
-
-  const voteBlock = () => {
-    // if (!isVisibleVoteBlock) return ''
-    const voteItemClassName = value => "sr-vote-item " + (simReport["votedOption"] === value ? "selected" : "")
-    const voteTooltip = authContext.isLoggedIn ? '' : 'Đăng nhập để vote'
-    const { articleANbVotes, articleBNbVotes } = simReport
-    return (
-      <div className="layout-grid margin-bottom--xs">
-        <ReactTooltip type="warning" />
-        <div class="col" style={{ 'width': 'calc(100% - 200px)' }}>
-          <div class="row ellipsis-container">
-            <span><a href={sourceUrl} target="_blank"> {sourceUrl} </a></span>
-          </div>
-          <div class="row ellipsis-container">
-            <span><a href={targetUrl} target="_blank"> {targetUrl} </a></span>
-          </div>
-        </div>
-        <div class="col-md-auto">
-          <div class="row">
-            <div className={voteItemClassName(1)} data-tip={voteTooltip}>
-              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-                disabled={!authContext.isLoggedIn}
-                onClick={() => applyVote(simReport, 1)}>
-                {articleANbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-              </button>
-            </div>
-          </div>
-          <div class="row">
-            <div className={voteItemClassName(2)} data-tip={voteTooltip}>
-              <button className="btn btn-outline-secondary btn-sm sr-vote-btn"
-                data-tip={voteTooltip}
-                disabled={!authContext.isLoggedIn}
-                onClick={() => applyVote(simReport, 2)}>
-                {articleBNbVotes}&nbsp;{iconRenderer(FaCheck, "#3571FF")}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-auto">
-          <div className={voteItemClassName(3)} data-tip={voteTooltip}>
-            <button className="btn btn-outline-secondary btn-sm sr-vote-error-btn"
-              data-tip={voteTooltip}
-              disabled={!authContext.isLoggedIn}
-              onClick={() => applyVote(simReport, 3)}>
-              {iconRenderer(FaTimes, "#EF5A5A")}
-            </button>
-          </div>
-        </div>
-        <div class="col-md-auto">
-          <div className={voteItemClassName(4)} data-tip={voteTooltip}>
-            <button className="btn btn-outline-secondary btn-sm sr-vote-irrelevant-btn"
-              data-tip={voteTooltip}
-              disabled={!authContext.isLoggedIn}
-              onClick={() => applyVote(simReport, 4)}>
-              {iconRenderer(FaHashtag, "#F69E0C")}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="dup-compare-container">
@@ -374,6 +416,7 @@ const DupCompare = (props) => {
 
       {loading ? <div className="sr-list-container centered-container"> <h2>Loading...</h2> </div> : resultPairsRenderer()}
 
+      {voteBlock()}
       <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
         <div class="col"></div>
         <div class="col-md-auto">{shareButtons}</div>
