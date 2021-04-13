@@ -97,7 +97,7 @@ export const DupReportList = (props) => {
       <div className="sr-vote-container">
         <div className="sr-vote-check-container">
           {voteForABtn}
-          {voteForABtn}
+          {voteForBBtn}
         </div>
         {errorVoteBtn}
         {irrVoteBtn}
