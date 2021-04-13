@@ -93,8 +93,8 @@ app.use('/', routes)
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
   const jsonResponse = { message: 'API Not Found' }
-  res.status(404).json(jsonResponse)
   res.jsonResponse = jsonResponse
+  res.status(404).json(jsonResponse)
   next(res)
 })
 
@@ -104,8 +104,8 @@ app.use((err, req, res) => {
   res.locals.error = req.app.get('env') === 'development' ? err : {}
   // render the error page
   const jsonResponse = { message: err }
-  res.status(err.status || 500).json(jsonResponse)
   res.jsonResponse = jsonResponse
+  res.status(err.status || 500).json(jsonResponse)
 })
 
 /**
@@ -115,8 +115,8 @@ app.use((err, req, res) => {
 if (app.get('env') === 'development') {
   app.use((err, req, res) => {
     const jsonResponse = { message: err }
-    res.status(err.status || 500).json(jsonResponse)
     res.jsonResponse = jsonResponse
+    res.status(err.status || 500).json(jsonResponse)
   })
 }
 

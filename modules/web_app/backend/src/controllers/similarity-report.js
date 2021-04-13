@@ -77,7 +77,7 @@ const getSimilarityRecords = async (request, response) => {
   const votes = getVotesRes.rows
 
   const results = simReports.map(report => {
-    const voteRecords = votes.filter(vote => vote['article_a_id'] === report['document_id_A'] && vote['article_b_id'] === report['document_id_A'])
+    const voteRecords = votes.filter(vote => vote['article_a_id'] === report['document_id_A'] && vote['article_b_id'] === report['document_id_B'])
     const articleAVotes = voteRecords.filter(vote => vote['voted_option'] === 1)
     const articleBVotes = voteRecords.filter(vote => vote['voted_option'] === 2)
     const errorVotes = voteRecords.filter(vote => vote['voted_option'] === 3)

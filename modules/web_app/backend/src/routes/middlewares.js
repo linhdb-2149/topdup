@@ -54,20 +54,23 @@ export const requiredField = async (req, response, body, params, query, next) =>
   if (bodyChecked) {
     jsonResponse.status = CODE.MISSING_BODY
     jsonResponse.message = `Missing! You are missing body field: [${bodyChecked}]`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
 
   if (queryChecked) {
     jsonResponse.status = CODE.MISSING_QUERY
     jsonResponse.message = `Missing! You are missing query field: [${bodyChecked}]`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
 
   if (paramChecked) {
     jsonResponse.status = CODE.MISSING_BODY
     jsonResponse.message = `Missing! You are missing param field: [${bodyChecked}]`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
-
-  response.jsonResponse = jsonResponse
-  response.status(jsonResponse.status).json(jsonResponse)
 
   next()
 }
@@ -82,20 +85,23 @@ export const validateField = async (req, response, next) => {
   if (bodyChecked.error) {
     jsonResponse.status = CODE.MISSING_BODY
     jsonResponse.message = `Lỗi định dạng dữ liệu - ${bodyChecked.error.details}`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
 
   if (queryChecked.error) {
     jsonResponse.status = CODE.INVALID_QUERY
     jsonResponse.message = `Lỗi định dạng dữ liệu - ${queryChecked.error.details}`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
 
   if (paramChecked.error) {
     jsonResponse.status = CODE.INVALID_PARAMS
     jsonResponse.message = `Lỗi định dạng dữ liệu - ${paramChecked.error.details}`
+    response.jsonResponse = jsonResponse
+    response.status(jsonResponse.status).json(jsonResponse)
   }
-
-  response.jsonResponse = jsonResponse
-  response.status(jsonResponse.status).json(jsonResponse)
 
   next()
 }
