@@ -51,32 +51,37 @@ export default function LoginModal(props) {
       <div style={{ padding: "20px" }}>
         <div className="layout-grid centered-container auth-heading">Đăng nhập</div>
         <div className="layout-grid centered-container margin-bottom--20">
-          <GoogleLogin
-            clientId="712851565891-s8rjhfg50a8ebqmeq8ssdd4f0u0s24ca.apps.googleusercontent.com"
-            buttonText="Login"
-            onSuccess={(ggResponse) => {
-              onSubmitLogin(AuthMode.Google, ggResponse, props)
-              console.log(ggResponse)
-            }}
-            onFailure={(ggResponse) => { }}
-            cookiePolicy={'single_host_origin'}
-            render={renderProps => (
-              <div onClick={renderProps.onClick}>
-                <ReactIconRender className={'ext-login-btn'} color={'#4267B2'} IconComponent={FcGoogle} />
-              </div>
-            )}
-          />
-          <FacebookLogin style={{ 'margin-top': '-5px' }}
-            appId="800436117349613"
-            fields="name,email,picture"
-            cssClass="btn btn-primary btn-block mt-2 ext-login-btn"
-            callback={(response) => onSubmitLogin(AuthMode.Facebook, response, props)}
-            render={renderProps => (
-              <div onClick={renderProps.onClick}>
-                <ReactIconRender className={'ext-login-btn'} color={'#4267B2'} IconComponent={FaFacebookSquare} />
-              </div>
-            )}
-          />
+          <div style={{ cursor: 'pointer' }}>
+            <GoogleLogin
+              clientId="712851565891-s8rjhfg50a8ebqmeq8ssdd4f0u0s24ca.apps.googleusercontent.com"
+              buttonText="Login"
+              onSuccess={(ggResponse) => {
+                onSubmitLogin(AuthMode.Google, ggResponse, props)
+                console.log(ggResponse)
+              }}
+              onFailure={(ggResponse) => { }}
+              cookiePolicy={'single_host_origin'}
+              render={renderProps => (
+                <div onClick={renderProps.onClick}>
+                  <ReactIconRender className={'ext-login-btn'} color={'#4267B2'} IconComponent={FcGoogle} />
+                </div>
+              )}
+            />
+          </div>
+          <div style={{ cursor: 'pointer' }}>
+            <FacebookLogin
+              style={{ 'margin-top': '-5px', cursor: 'pointer' }}
+              appId="800436117349613"
+              fields="name,email,picture"
+              cssClass="btn btn-primary btn-block mt-2 ext-login-btn"
+              callback={(response) => onSubmitLogin(AuthMode.Facebook, response, props)}
+              render={renderProps => (
+                <div onClick={renderProps.onClick}>
+                  <ReactIconRender className={'ext-login-btn'} color={'#4267B2'} IconComponent={FaFacebookSquare} />
+                </div>
+              )}
+            />
+          </div>
         </div>
 
         <div className="layout-grid centered-container margin-bottom--20">

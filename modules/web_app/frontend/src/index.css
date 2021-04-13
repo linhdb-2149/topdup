@@ -165,3 +165,7 @@ span {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.clickable {
+  cursor: pointer;
+}
