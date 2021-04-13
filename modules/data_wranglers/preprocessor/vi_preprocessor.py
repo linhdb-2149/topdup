@@ -5,9 +5,8 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 import nltk
-from more_itertools.more import windowed
-
 from data_wranglers.plugins.vncorenlp import VnCoreNLPSingleton
+from more_itertools.more import windowed
 
 from .base import BasePreProcessor
 from .cleaning import normalize_text
