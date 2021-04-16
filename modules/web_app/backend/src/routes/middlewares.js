@@ -34,7 +34,7 @@ export const isVerifiedToken = async (req, res, next) => {
   }
 }
 
-const fieldValidation = (input, template) => {
+const hasMissingField = (input, template) => {
   for (let item of template) {
     if (!Object.prototype.hasOwnProperty.call(input, item)) {
       return item
@@ -44,35 +44,29 @@ const fieldValidation = (input, template) => {
 }
 
 // check data field when request
-export const requiredField = async (req, response, body, params, query, next) => {
-  const bodyChecked = fieldValidation(req.body, body)
-  const queryChecked = fieldValidation(req.query, query)
-  const paramChecked = fieldValidation(req.params, params)
+export const requiredField = async (req, response, bodyFields, paramFields, queryFields, next) => {
+  const missingBodyField = hasMissingField(req.body, bodyFields)
+  const missingQueryField = hasMissingField(req.query, queryFields)
+  const missingParamField = hasMissingField(req.params, paramFields)
 
-  const jsonResponse = {}
+  let message = ''
 
-  if (bodyChecked) {
-    jsonResponse.status = CODE.MISSING_BODY
-    jsonResponse.message = `Missing! You are missing body field: [${bodyChecked}]`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+  if (missingBodyField) {
+    message = `Missing! You are missing body field: [${ missingBodyField }]`
+    response.status(CODE.MISSING_BODY).json({ message })
   }
 
-  if (queryChecked) {
-    jsonResponse.status = CODE.MISSING_QUERY
-    jsonResponse.message = `Missing! You are missing query field: [${bodyChecked}]`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+  if (missingQueryField) {
+    message = `Missing! You are missing query field: [${ missingQueryField }]`
+    response.status(CODE.MISSING_QUERY).json({ message })
   }
 
-  if (paramChecked) {
-    jsonResponse.status = CODE.MISSING_BODY
-    jsonResponse.message = `Missing! You are missing param field: [${bodyChecked}]`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+  if (missingParamField) {
+    message = `Missing! You are missing param field: [${ missingParamField }]`
+    response.status(CODE.MISSING_PARAMS).json({ message })
   }
 
-  next()
+  next(message)
 }
 
 export const validateField = async (req, response, next) => {
@@ -80,27 +74,24 @@ export const validateField = async (req, response, next) => {
   const queryChecked = Joi.validate(req.query, schema)
   const paramChecked = Joi.validate(req.params, schema)
 
-  const jsonResponse = {}
+  let message = ''
 
   if (bodyChecked.error) {
-    jsonResponse.status = CODE.MISSING_BODY
-    jsonResponse.message = `Lỗi định dạng dữ liệu - ${bodyChecked.error.details}`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+    message = `Lỗi định dạng dữ liệu - ${ bodyChecked.error.details }`
+    response.jsonResponse = { message }
+    response.status(CODE.MISSING_BODY).json({ message })
   }
 
   if (queryChecked.error) {
-    jsonResponse.status = CODE.INVALID_QUERY
-    jsonResponse.message = `Lỗi định dạng dữ liệu - ${queryChecked.error.details}`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+    message = `Lỗi định dạng dữ liệu - ${ queryChecked.error.details }`
+    response.jsonResponse = { message }
+    response.status(CODE.INVALID_QUERY).json({ message })
   }
 
   if (paramChecked.error) {
-    jsonResponse.status = CODE.INVALID_PARAMS
-    jsonResponse.message = `Lỗi định dạng dữ liệu - ${paramChecked.error.details}`
-    response.jsonResponse = jsonResponse
-    response.status(jsonResponse.status).json(jsonResponse)
+    message = `Lỗi định dạng dữ liệu - ${ paramChecked.error.details }`
+    response.jsonResponse = { message }
+    response.status(CODE.INVALID_PARAMS).json({ message })
   }
 
   next()
