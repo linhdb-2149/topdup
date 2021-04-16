@@ -1,7 +1,6 @@
 import * as _ from 'lodash'
 import { useContext, useEffect, useState } from "react"
-import { Badge } from 'react-bootstrap'
-import RangeSlider from 'react-bootstrap-range-slider'
+import { Form } from 'react-bootstrap'
 import { IconContext } from 'react-icons'
 import { FaCheck, FaFacebookSquare, FaHashtag, FaTimes, FaTwitterSquare } from 'react-icons/fa'
 import { useLocation } from "react-router-dom"
@@ -20,6 +19,12 @@ const queryString = require('query-string')
 const Mode = {
   Text: 'text',
   Url: 'url'
+}
+
+const displayOrderDict = {
+  indexA: 'segmentIdxA',
+  indexB: 'segmentIdxB',
+  simScore: 'similarityScore'
 }
 
 const DupCompare = (props) => {
@@ -41,8 +46,8 @@ const DupCompare = (props) => {
   const [sourceMode, setSourceMode] = useState(defaultModeA)
   const [targetMode, setTargetMode] = useState(defaultModeB)
 
-  // Similarity threshold set for results dipslay: 0.80
-  const [sScoreThreshold, setSScoreThreshold] = useState(0.80)
+  // Similarity threshold set for results dipslay: 0.0
+  const [sScoreThreshold, setSScoreThreshold] = useState(0)
 
   const [sourceUrl, setSourceUrl] = useState(_sourceUrl)
   const [targetUrl, setTargetUrl] = useState(_targetUrl)
@@ -57,6 +62,7 @@ const DupCompare = (props) => {
   const [shareUrl, setShareUrl] = useState('')
 
   const [loading, setLoading] = useState(false)
+  const [displayOrder, setDisplayOrder] = useState(displayOrderDict.indexA)
 
   const toastService = new ToastService()
   const simCheckService = new DupCompareService()
@@ -77,7 +83,7 @@ const DupCompare = (props) => {
     if (sourceMode === Mode.Text) queryParam['sourceText'] = sourceContent
     if (targetMode === Mode.Url) queryParam['targetUrl'] = targetContent
     if (targetMode === Mode.Text) queryParam['targetText'] = targetContent
-    setShareUrl(`${TopDup.BaseUrl}/dup-compare?${queryString.stringify(queryParam)}`)
+    setShareUrl(`${ TopDup.BaseUrl }/dup-compare?${ queryString.stringify(queryParam) }`)
 
     console.log('shareUrl: ', shareUrl)
 
@@ -124,13 +130,14 @@ const DupCompare = (props) => {
     const sourceSegements = compareResult.segmentListA || []
     const targetSegements = compareResult.segmentListB || []
     const resultPairs = compareResult.pairs || []
-    const sortedResultPairs = _.orderBy(resultPairs, ['similarityScore'], ['desc'])
+    const sortOrder = displayOrder === displayOrderDict.simScore ? 'desc' : 'asc'
+    const sortedResultPairs = _.orderBy(resultPairs, [displayOrder], [sortOrder])
     const filteredResults = sortedResultPairs.filter(item => item.similarityScore >= sScoreThreshold)
     setSourceSegments(sourceSegements)
     setTargetSegments(targetSegements)
     setResultPairs(sortedResultPairs)
     setFilteredResults(filteredResults)
-  }, [compareResult, sScoreThreshold])
+  }, [compareResult, sScoreThreshold, displayOrder])
 
   const getBtnClass = (sourceMode, btnLabel) => {
     return sourceMode === btnLabel
@@ -278,6 +285,10 @@ const DupCompare = (props) => {
     )
   }
 
+  const onChangeDisplayOrder = ($event) => {
+    setDisplayOrder($event.target.value)
+  }
+
   return (
     <div className="dup-compare-container">
       <div className="layout-grid margin-bottom--20">
@@ -307,21 +318,40 @@ const DupCompare = (props) => {
         <button type="button" className="btn btn-warning compare-btn" onClick={checkSimilarity}>So sánh</button>
       </div>
 
-      <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
-        <div class="col-md-2 text-bold">Kết quả <Badge variant="secondary">{filteredResults.length}</Badge></div>
-        <div class="col-md-auto text-bold" style={{ 'margin-right': '-20px' }}>Score</div>
-        <div class="col-md-auto">
+      <div className="layout-grid margin-bottom--xs" style={{ 'align-items': 'center' }}>
+        <div class="layout-cell text-bold label--5" style={{ width: '260px' }}>
+          Kết quả: {filteredResults.length}
+        </div>
+        <div class="layout-cell col">
+          {voteBlock()}
+        </div>
+        <div class="layout-cell" style={{ width: '260px' }}>
+          <Form>
+            <Form.Group
+              controlId="exampleForm.SelectCustom"
+              onChange={onChangeDisplayOrder}
+            >
+              <Form.Label>Hển thị</Form.Label>
+              <Form.Control as="select" custom>
+                <option value={displayOrderDict.indexA}>Theo thứ tự câu (bên trái)</option>
+                <option value={displayOrderDict.indexB}>Theo thứ tự câu (bên phải)</option>
+                <option value={displayOrderDict.simScore}>Độ trùng lặp giảm dần</option>
+              </Form.Control>
+            </Form.Group>
+          </Form>
+        </div>
+        {/* <div class="col-md-auto" style={{ 'margin-right': '-20px' }}>
+          <div class="text-bold">Score</div>
           <RangeSlider
             value={sScoreThreshold} min={0} max={1} step={0.01}
             onChange={e => setSScoreThreshold(e.target.value)}
             tooltipPlacement='top' tooltip="on"
           />
-        </div>
+        </div> */}
       </div>
 
       {loading ? <div className="sr-list-container centered-container"> <h2>Loading...</h2> </div> : resultPairsRenderer()}
 
-      {voteBlock()}
       <div className="row margin-bottom--xs" style={{ 'align-items': 'center' }}>
         <div class="col"></div>
         <div class="col-md-auto">{shareButtons}</div>

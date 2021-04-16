@@ -169,3 +169,7 @@ span {
 .clickable {
   cursor: pointer;
 }
+
+.label--5 {
+  font-size: larger;
+}
