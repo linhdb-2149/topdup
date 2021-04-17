@@ -10,3 +10,6 @@ output "staging_vpc_public_subnets" {
   value = module.staging_vpc.public_subnets
 }
 
+output "staging_vpc_cidr_block" {
+  value = module.staging_vpc.vpc_cidr_block
+}
