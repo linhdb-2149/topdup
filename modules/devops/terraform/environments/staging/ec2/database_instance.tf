@@ -4,7 +4,7 @@ module "staging_database" {
   name                   = "topdup-staging-database"
   instance_count         = 1
   ami                    = "ami-06fb5332e8e3e577a"
-  instance_type          = "t3.micro"
+  instance_type          = "t3a.medium"
   key_name               = "topdup-staging"
   root_block_device = [
     {
@@ -17,19 +17,19 @@ module "staging_database" {
     {
       device_name = "/dev/sdf"
       volume_type = "gp2"
-      volume_size = 30
+      volume_size = 200
     }
   ]
 
   disable_api_termination     = true
   vpc_security_group_ids      = tolist([module.staging_database_secgroup.this_security_group_id])
-  subnet_ids                  = data.terraform_remote_state.staging_vpc.outputs.staging_vpc_public_subnets
+  subnet_ids                  = data.terraform_remote_state.prod_vpc.outputs.prod_vpc_private_subnets
 
-  tags = {
+  tags= {
+    Name        = "topdup-staging-database"
     Terraform   = "true"
     Environment = "topdup-staging"
     Function    = "database"
-    Description = "PostgreSQL"
   }
 }
 
@@ -38,9 +38,9 @@ module "staging_database_secgroup" {
 
   name        = "database_secgroup"
   description = "Security group for Database Ec2 instance"
-  vpc_id      = data.terraform_remote_state.staging_vpc.outputs.staging_vpc_id
+  vpc_id      = data.terraform_remote_state.prod_vpc.outputs.prod_vpc_id
 
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_cidr_blocks = [data.terraform_remote_state.prod_vpc.outputs.prod_vpc_cidr_block]
   ingress_rules       = ["ssh-tcp", "all-icmp", "postgresql-tcp"]
   egress_rules        = ["all-all"]
 }
