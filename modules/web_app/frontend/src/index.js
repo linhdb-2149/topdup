@@ -1,6 +1,7 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
 import "bootstrap-daterangepicker/daterangepicker.css"
+import 'bootstrap/dist/css/bootstrap.min.css'
 import React from 'react'
+import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css'
 import ReactDOM from 'react-dom'
 import 'react-toastify/dist/ReactToastify.css'
 import App from './components/App/App'
