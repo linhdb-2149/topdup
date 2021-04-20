@@ -1,11 +1,12 @@
+import { useContext } from "react"
 import { Modal } from "react-bootstrap"
 import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props'
 import { GoogleLogin } from 'react-google-login'
 import { FaFacebookSquare } from "react-icons/fa"
 import { FcGoogle } from "react-icons/fc"
-import { AuthMode, HTTP_CODE, Severity } from "../../shared/constants"
+import { AuthMode } from "../../shared/constants"
 import ReactIconRender from "../../shared/react-icon-renderer"
-import { ToastService } from "../../shared/toast.service"
+import { AuthContext } from "./auth-context"
 import AuthService from "./auth-service"
 import './auth.css'
 import ValidatedSignupForm from "./vaidated-signup-form"
@@ -13,25 +14,24 @@ import ValidatedSignupForm from "./vaidated-signup-form"
 function SignupModal(props) {
   const setUserData = props.setUserData
   const authService = new AuthService()
-  const toastService = new ToastService()
+  const authContext = useContext(AuthContext)
 
   const onSubmitSignup = (signupMode, userCredential, modalProps) => {
-    let httpRequest = authService.signupNormal(userCredential)
+    let httpRequest
+
+    if (signupMode === AuthMode.Normal) httpRequest = authService.signupNormal(userCredential)
     if (signupMode === AuthMode.Facebook) httpRequest = authService.authByFacebook(userCredential)
     if (signupMode === AuthMode.Google) httpRequest = authService.authByGoogle(userCredential)
 
-    httpRequest.then(
-      result => {
-        if (result.status !== HTTP_CODE.SUCCESS) {
-          toastService.displayToast(result, Severity.Warning)
-          return
+    if (httpRequest) {
+      httpRequest.then(
+        result => {
+          authContext.login(result.data.user)
+          setUserData(result.data && result.data.user)
+          modalProps.onHide()
         }
-        setUserData(result.data && result.data.user)
-        toastService.displayToast(result, Severity.Success)
-        modalProps.onHide()
-      },
-      error => toastService.displayToast(error.response, Severity.Error)
-    )
+      )
+    }
   }
 
   return (
