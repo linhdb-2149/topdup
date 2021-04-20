@@ -41,7 +41,7 @@ function SignupModal(props) {
         <div className="layout-grid centered-container margin-bottom--20">
           <div style={{ cursor: 'pointer' }}>
             <GoogleLogin
-              clientId="xxx"
+              clientId="712851565891-s8rjhfg50a8ebqmeq8ssdd4f0u0s24ca.apps.googleusercontent.com"
               buttonText="Login"
               onSuccess={(ggResponse) => onSubmitSignup(AuthMode.Google, ggResponse, props)}
               onFailure={(ggResponse) => { }}
