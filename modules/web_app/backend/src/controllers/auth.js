@@ -79,7 +79,7 @@ const register = async (req, res, next) => {
     const result = await pool.query(queryAddNewUser)
 
     var mailOptions = {
-      from: process.env.userEmail,
+      from: process.env.WEB_EMAIL,
       to: result.rows[0].email,
       subject: "Sending Email using Node.js",
       text: `Please use the following link within the next 10 minutes to activate your account on xxx APP: ${ hostName }/api/v1/auth/verification/verify-account/${ result.rows[0].id }/${ secretCode }`,
