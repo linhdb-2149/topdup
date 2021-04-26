@@ -6,6 +6,9 @@ import { externalAuthUrl, hostName, secretKey } from "../configs/index"
 import { CODE } from "../constants/index"
 import createPool from "./pool.js"
 import transporter from "./utils/nodemailer"
+
+
+
 const pool = createPool(process.env.POOL_HOST,
   process.env.POOL_DB_NAME,
   process.env.POOL_USR,
@@ -76,7 +79,7 @@ const register = async (req, res, next) => {
     const result = await pool.query(queryAddNewUser)
 
     var mailOptions = {
-      from: "topdup.org@gmail.com",
+      from: process.env.WEB_EMAIL,
       to: result.rows[0].email,
       subject: "Sending Email using Node.js",
       text: `Please use the following link within the next 10 minutes to activate your account on xxx APP: ${ hostName }/api/v1/auth/verification/verify-account/${ result.rows[0].id }/${ secretCode }`,
@@ -318,14 +321,14 @@ const restPassword = async (req, res) => {
 const genSecretCode = async (req, res) => {
   try {
     const { email } = req.query
-        
+
     let queryIsExist = `
     SELECT *
     FROM public."user"
     WHERE email =  '${ email }'
     `
     const result = await pool.query(queryIsExist)
-    
+
     var mailOptions = {
       from: "topdup.org@gmail.com",
       to: result.rows[0].email,
